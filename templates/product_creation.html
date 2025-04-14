@@ -18,10 +18,147 @@
         color: white;
     }
 
-    
+    h1 {
+        text-align: center;
+        padding: 20px;
+        font-size: 40px;
+    }
+
+    button {
+        border: 1px transparent solid;
+        border-radius: 5px;
+        font-size: 20px;
+        background-color: red;
+        color: white;
+        padding: 15px 10px;
+    }
+
+    button:hover {
+        background-color: white;
+        color: black;
+        transition: 0.2s ease-in;
+    }
+
+    input {
+        font-size: 20px;
+        padding: 15px 10px;
+        width: 100%;
+        border: 1px transparent solid;
+        border-radius: 5px;
+    }
+
+    .div-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .div-content {
+        display: flex;
+        width: 25%;
+        padding: 20px;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #div-image-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    #div-image-content .image-url-inputs:not(:first-child) {
+        margin-top: 10px;
+    }
+
 </style>
 
 <body>
-    
+    <h1>Product Creation</h1>
+
+    <div class="div-body">
+        <div class="div-content">
+            <input type="text" name="product-title" id="product-title-input" placeholder="Product Title">
+            <input type="text" name="product-description" id="product-description-input" placeholder="Product Description">
+            <div id="div-image-content">
+                <input type="text" name="product-images" id="product-image-1-input" class="image-url-inputs" placeholder="url to image">
+            </div>
+            <button id="add-image-btn">Add Image</button>
+            <input type="text" name="warranty" id="product-warranty-input" placeholder="Warrany Period (Optional)">
+            <input type="text" name="category" id="product-category-input" placeholder="Category">
+            <input type="text" name="available-colors" id="available-colors-input" placeholder="Available Colors">
+            <input type="text" name="sizes" id="sizes-input" placeholder="Available Sizes">
+            <input type="text" name="inventory-size" id="inventory-size-input" placeholder="Inventory Size">
+            <input type="text" name="price" id="price-input" placeholder="Price of Product">
+            <button id="create-product-btn">Create Product</button>
+        </div>
+    </div>
 </body>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // elements 
+        const product_title_input = document.getElementById("product-title-input")
+
+        const product_description_input = document.getElementById("product-description-input")
+
+        const add_image_btn = document.getElementById("add-image-btn")
+
+        const product_warranty_input = document.getElementById("product-warranty-input")
+
+        const product_category_input = document.getElementById("product-category-input")
+
+        const available_colors_input = document.getElementById("available-colors-input")
+
+        const sizes_input = document.getElementById("sizes-input")
+
+        const inventory_size_input = document.getElementById("inventory-size-input")
+
+        const price_input = document.getElementById("price-input")
+
+        const create_product_btn = document.getElementById("create-product-btn")
+
+        add_image_btn.addEventListener("click", function() {
+            const image_inputs = document.getElementsByClassName("image-url-inputs")
+            const last_image_input = image_inputs[image_inputs.length - 1];
+
+            const newId = `product-image-${image_inputs.length + 1}-input`;
+            const html = `<input type="text" name="product-images" id="${newId}" class="image-url-inputs" placeholder="url to image">`;
+
+            last_image_input.insertAdjacentHTML("afterend", html)
+        })  
+
+        create_product_btn.addEventListener("click", async function() {
+            const product_title = product_title_input.value
+            const product_description = product_description_input.value
+            const product_warranty = product_warranty_input.value
+            const product_category = product_category_input.value
+            const available_colors = available_colors_input.value
+            const inventory_size = inventory_size_input.value
+            const sizes = sizes_input.value
+            const price = price_input.value
+
+            const res = await fetch("/api/create_product_warranty", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    product_title: product_title,
+                    product_description: product_description,
+                    product_warranty: product_warranty,
+                    product_category: product_category,
+                    available_colors: available_colors,
+                    inventory_size: inventory_size,
+                    sizes: sizes,
+                    price: price
+                })
+            });
+        })
+
+    })
+</script>
 </html>
