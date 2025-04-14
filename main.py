@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, flash, redirect, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text, create_engine, text
+from sqlalchemy import text, create_engine, text, Float
 from enum import IntEnum
 import random
 import bcrypt
@@ -32,12 +32,13 @@ class Product(db.Model):
     name = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=False)
     warranty_period = db.Column(db.String(20))
+    category = db.Column(db.String(50))
     images = db.Column(db.String(255), nullable=False)
     colors = db.Column(db.String(50), nullable=False)
     sizes = db.Column(db.String(50), nullable=False)
     inventory_space = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Integer, nullable=False)
-    discount_price = db.Column(db.Integer)
+    price = db.Column(Float, nullable=False)
+    discount_price = db.Column(Float)
     discount_time = db.Column(db.DateTime)
 
 
@@ -99,7 +100,8 @@ def create_product():
 
     name = data.get("product_title")
     description = data.get("product_description")
-    warranty_period = data.get("product_warranty")  # Optional
+    warranty_period = data.get("product_warranty")
+    product_category = data.get("product_category")
     colors = data.get("available_colors")
     inventory_space = data.get("inventory_size")
     sizes = data.get("sizes")
@@ -114,11 +116,12 @@ def create_product():
         name=name,
         description=description,
         warranty_period=warranty_period,
+        category=product_category,
         images=images,
         colors=colors,
         sizes=sizes,
         inventory_space=int(inventory_space),
-        price=int(price),
+        price=float(price),
         discount_price=discount_price,
         discount_time=discount_time
     )
