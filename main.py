@@ -23,7 +23,7 @@ class User(db.Model):
     name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(30), unique=True, nullable=False)
     username = db.Column(db.String(15), nullable=False)
-    password = db.Column(db.String(255), nullable=False)  # 255 to allow hashed passwords
+    password = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.SmallInteger, nullable=False)  # 1 = customer, 2 = vendor, 3 = admin
 
 
@@ -52,7 +52,7 @@ class UnconfirmedOrder(db.Model):
 
 
 class Review(db.Model):
-    review_id = db.Column(db.Integer, primary_key=True)  # Not in original SQL, but necessary for ORM
+    review_id = db.Column(db.Integer, primary_key=True)
     reviewers_name = db.Column(db.String(50))
     rating = db.Column(db.Integer, nullable=False)
     vendor_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
@@ -72,7 +72,7 @@ class PendingReturn(db.Model):
 
 
 class Chat(db.Model):
-    chat_id = db.Column(db.Integer, primary_key=True)  # Again, added for ORM structure
+    chat_id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.Text)
     images = db.Column(db.String(255))
     return_id = db.Column(db.Integer, db.ForeignKey('pending_return.return_id'))
@@ -97,17 +97,37 @@ def product_creation():
 def create_product():
     data = request.get_json()
 
-    product_title = data.get("product_title")
-    product_description = data.get("product_description")
-    product_warranty = data.get("product_warranty")  # could be None or empty
-    product_category = data.get("product_category")
-    available_colors = data.get("available_colors")
-    inventory_size = data.get("inventory_size")
+    name = data.get("product_title")
+    description = data.get("product_description")
+    warranty_period = data.get("product_warranty")  # Optional
+    colors = data.get("available_colors")
+    inventory_space = data.get("inventory_size")
     sizes = data.get("sizes")
     price = data.get("price")
+    
+    # Default values for now — update these if you want full support later
+    images = "default.jpg"  # You can replace this with actual image handling
+    discount_price = None
+    discount_time = None
 
-    # if product_warranty:
-         
+    product = Product(
+        name=name,
+        description=description,
+        warranty_period=warranty_period,
+        images=images,
+        colors=colors,
+        sizes=sizes,
+        inventory_space=int(inventory_space),
+        price=int(price),
+        discount_price=discount_price,
+        discount_time=discount_time
+    )
+
+    db.session.add(product)
+    db.session.commit()
+
+    return jsonify({"message": "Product Created Successfully", "product": product.name})
+
 
 if __name__ == '__main__':
         app.run(debug=True)
