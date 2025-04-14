@@ -143,7 +143,7 @@
             const sizes = sizes_input.value
             const price = price_input.value
 
-            const res = await fetch("/api/create_product_warranty", {
+            const res = await fetch("/api/create_product", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
