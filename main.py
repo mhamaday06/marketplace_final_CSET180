@@ -28,3 +28,6 @@ def signup():
 @app.route('/product_creation')
 def product_creation():
     return render_template('product_creation.html')
+
+if __name__ == '__main__':
+        app.run(debug=True)
