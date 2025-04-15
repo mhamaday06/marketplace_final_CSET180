@@ -94,6 +94,12 @@ def signup():
 def product_creation():
     return render_template('product_creation.html')
 
+@app.route('/product_page')
+def product_page():
+    return render_template('product_page.html')
+
+
+
 @app.route('/api/create_product', methods=['POST'])
 def create_product():
     data = request.get_json()
@@ -131,6 +137,27 @@ def create_product():
 
     return jsonify({"message": "Product Created Successfully", "product": product.name})
 
+@app.route('/api/get_products', methods=['GET'])
+def get_products():
+    products = Product.query.all()
+    product_list = []
+    for product in products:
+        product_list.append({
+            "product_id": product.product_id,
+            "name": product.name,
+            "description": product.description,
+            "warranty_period": product.warranty_period,
+            "category": product.category,
+            "images": product.images,
+            "colors": product.colors,
+            "sizes": product.sizes,
+            "inventory_space": product.inventory_space,
+            "price": product.price,
+            "discount_price": product.discount_price,
+            "discount_time": product.discount_time.isoformat() if product.discount_time else None
+        })
+
+    return jsonify({"products": product_list})
 
 if __name__ == '__main__':
         app.run(debug=True)
