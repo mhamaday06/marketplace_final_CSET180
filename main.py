@@ -88,7 +88,42 @@ def login():
 
 @app.route('/signup')
 def signup():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        username = request.form['username']
+        password = request.form['password']
+        user_type = request.form.get('user_type', 1)  
+
+        if not name or not email or not username or not password:
+            flash("All fields are required", "error")
+            return redirect('/signup') 
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("User already exists", "error")
+            return redirect('/signup')  
+
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        new_user = User(
+            name=name,
+            email=email,
+            username=username,
+            password=hashed_password,
+            user_type=int(user_type)
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Account created successfully!", "success")
+        return redirect('/login')  # or wherever you'd like
     return render_template('signup.html')
+
+@app.route('/vendor_signup')
+def vendor_signup():
+    return render_template('vendor_signup')
 
 @app.route('/product_creation')
 def product_creation():
