@@ -75,6 +75,13 @@
         border-radius: 5px;
     }
 
+    #filter-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        
+    }
+
     .div-body {
         display: flex;
         flex-direction: column;
@@ -93,15 +100,16 @@
     .product-card {
         display: flex;
         flex-direction: column;
-        border: 1px red solid;
-        width: 300px; /* set a fixed width */
-        margin: 10px; /* consistent spacing */
+        /* border: 1px red solid; */
+        width: 400px;
+        margin: 10px;
         justify-content: space-between; /* helps align "Add to Cart" at the bottom */
     }
 
     .product-card h2 {
         text-align: center;
-        padding-bottom: 5px;
+        padding-bottom: 10px;
+        font-size: 27px;
     }
 
     .product-card p {
@@ -111,6 +119,7 @@
     .product-card button {
         width: 50%;
         margin: 0 auto;
+        margin-top: 10px;
     }
 
 </style>
@@ -128,9 +137,28 @@
     </nav>
 
     <h1>Product Page</h1>
+
+    <div id="filter-container">
+
+        <select name="filter-products" id="filter-select">
+            <option value="">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Apparel">Apparel</option>
+            <option value="Footwear">Footwear</option>
+            <option value="Outdoor">Outdoor</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Gaming">Gaming</option>
+            <option value="Home">Home</option>
+            <option value="Health">Health</option>
+            <option value="Fitness">Fitness</option>
+            <option value="Toys">Toys</option>
+        </select>
+
+    </div>
     
     <div class="div-body">
         <div class="div-content" id="div-content">
+            
             <!-- Generated Products load within this container -->
         </div>
     </div>
