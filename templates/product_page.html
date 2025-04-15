@@ -19,6 +19,33 @@
         color: white;
     }
 
+    nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: white;
+        margin-bottom: 20px;
+    }
+
+    nav ul {
+        list-style-type: none;
+        display: flex;
+        gap: 10px;
+        text-decoration: none;
+        padding: 20px;
+    }
+
+    nav ul li {
+        display: flex;
+        flex-direction: column;
+        font-size: 20px;
+    }
+
+    nav ul li a {
+        text-decoration: none;
+        color: black;
+    }
+
     h1 {
         text-align: center;
         padding: 20px;
@@ -57,17 +84,19 @@
 
     .div-content {
         display: flex;
-        width: 90%;
-        padding: 10px;
+        flex-wrap: wrap;
         justify-content: center;
-        align-items: center;
-        gap: 10px;
+        gap: 20px;
+        padding: 20px;
     }
 
     .product-card {
         display: flex;
         flex-direction: column;
         border: 1px red solid;
+        width: 300px; /* set a fixed width */
+        margin: 10px; /* consistent spacing */
+        justify-content: space-between; /* helps align "Add to Cart" at the bottom */
     }
 
     .product-card h2 {
@@ -77,6 +106,11 @@
 
     .product-card p {
         padding: 0px 5px 5px 5px;
+    }
+
+    .product-card button {
+        width: 50%;
+        margin: 0 auto;
     }
 
 </style>
@@ -104,14 +138,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // info for each product
-        const product_titles = document.querySelectorAll("title")
-        const categories = document.querySelectorAll("category")
-        const descriptions = document.querySelectorAll("description")
-        const images = document.querySelectorAll("img")
-        const prices = document.querySelectorAll("price")
-        const sizes = document.querySelectorAll("sizes")
-
         async function loadProducts() {
             const res = await fetch("/api/get_products");
             const data = await res.json();
@@ -127,12 +153,15 @@
                     <p><strong>Description:</strong> ${product.description}</p>
                     <p><strong>Colors:</strong> ${product.colors}</p>
                     <p><strong>Sizes:</strong> ${product.sizes}</p>
+                    <button id="add-cart-btn">Add to Cart</button>
                 `;
                 container.appendChild(div);
             });
         }
         
         loadProducts();
+
+
     })
 </script>
 
