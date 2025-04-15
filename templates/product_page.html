@@ -83,17 +83,21 @@
 
 <body>
 
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('signup') }}">Signup</a></li>
+            <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
+            <li><a href=" {{ url_for('product_page') }} ">Product Page</a></li>
+        </ul>
+    </nav>
+
     <h1>Product Page</h1>
     
     <div class="div-body">
         <div class="div-content" id="div-content">
-            <!-- <h2 class="title">Product Title</h2>
-            <p class="category">product category</p>
-            <p class="description">product description</p>
-            <p class="img">IMG of product</p>
-            <p class="price">price of product</p>
-            <p class="sizes">sizes</p>
-            <button id="add-cart-btn">Add to Cart</button> -->
+            <!-- Generated Products load within this container -->
         </div>
     </div>
 </body>

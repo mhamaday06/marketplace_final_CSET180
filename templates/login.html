@@ -22,6 +22,15 @@
 </style>
 
 <body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('signup') }}">Signup</a></li>
+            <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
+            <li><a href=" {{ url_for('product_page') }} ">Product Page</a></li>
+        </ul>
+    </nav>
     
 </body>
 <script>
