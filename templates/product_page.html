@@ -122,6 +122,13 @@
         margin-top: 10px;
     }
 
+    #filter-select {
+        font-size: 15px;
+        padding: 15px 10px;
+        border: 1px transparent solid;
+        border-radius: 5px;
+    }
+
 </style>
 
 <body>
@@ -181,6 +188,7 @@
                     <p><strong>Description:</strong> ${product.description}</p>
                     <p><strong>Colors:</strong> ${product.colors}</p>
                     <p><strong>Sizes:</strong> ${product.sizes}</p>
+                    <p><strong>Category:</strong> ${product.category}</p>
                     <button id="add-cart-btn">Add to Cart</button>
                 `;
                 container.appendChild(div);
@@ -189,7 +197,24 @@
         
         loadProducts();
 
+        const select_tag = document.getElementById("filter-select")
+        const filter_options = document.getElementsByTagName("option")
+        select_tag.addEventListener("change", function() {
+            
+            const select_tag_value = select_tag.value
+            const product_cards = Array.from(document.getElementsByClassName("product-card"));
 
+            product_cards.forEach(product => {
+                const categoryText = product.querySelector("p:nth-last-of-type(1)").textContent; // grabs the category within product
+                const categoryValue = categoryText.replace("Category:", "").trim(); // good practice to assume there could be some whitespace here
+
+                if (select_tag.value === "" || categoryValue === select_tag.value) { // also checks if the user has 'All Categories' selected with first conditional
+                    product.style.display = "flex";
+                } else {
+                    product.style.display = "none";
+                }
+            });
+        })
     })
 </script>
 
