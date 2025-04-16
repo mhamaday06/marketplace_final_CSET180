@@ -52,6 +52,14 @@ class UnconfirmedOrder(db.Model):
     order_status = db.Column(db.String(15), nullable=False)
 
 
+class CartItem(db.Model):
+    cart_item_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    added_at = db.Column(db.DateTime, server_default=db.func.now())
+
+
 class Review(db.Model):
     review_id = db.Column(db.Integer, primary_key=True)
     reviewers_name = db.Column(db.String(50))
