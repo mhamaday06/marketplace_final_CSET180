@@ -92,9 +92,10 @@ def index():
 
 @app.route('/login')
 def login():
+
     return render_template('login.html')
 
-@app.route('/signup')
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         name = request.form['name']
@@ -126,12 +127,17 @@ def signup():
         db.session.commit()
 
         flash("Account created successfully!", "success")
-        return redirect('/login')  # or wherever you'd like
+        return redirect('/login')  
     return render_template('signup.html')
 
 @app.route('/vendor_signup')
 def vendor_signup():
     return render_template('vendor_signup')
+
+@app.route('/vendor_login')
+def vendor_login():
+    return render_template('vendor_login')
+
 
 @app.route('/product_creation')
 def product_creation():
