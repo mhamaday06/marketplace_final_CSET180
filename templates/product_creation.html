@@ -74,6 +74,14 @@
         border-radius: 5px;
     }
 
+    #btn-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
     .div-body {
         display: flex;
         flex-direction: column;
@@ -103,6 +111,14 @@
         margin-top: 10px;
     }
 
+    #div-edit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 15px;
+    }
+
 </style>
 
 <body>
@@ -118,8 +134,13 @@
 
     <h1>Product Creation</h1>
 
+    <div id="btn-container">
+        <button id="create-btn">Create</button>
+        <button id="edit-btn">Edit</button>
+    </div>
+
     <div class="div-body">
-        <div class="div-content">
+        <div class="div-content" id="div-content">
             <input type="text" name="product-title" id="product-title-input" placeholder="Product Title">
             <input type="text" name="product-description" id="product-description-input" placeholder="Product Description">
             <div id="div-image-content">
@@ -147,11 +168,61 @@
             <input type="text" name="price" id="price-input" placeholder="Price of Product">
             <button id="create-product-btn">Create Product</button>
         </div>
+
+        <div id="div-edit">
+            <input type="text" name="product-id-input" id="product-id-input" placeholder="Product ID">
+            <button id="search-btn">Search</button>
+
+            <input type="text" name="title" id="title" placeholder="Product Title">
+            <input type="text" name="product-description" id="description" placeholder="Product Description">
+            <input type="text" name="warranty" id="warranty-period" placeholder="Warranty Period (Optional)">
+            <input type="text" name="category" id="category" placeholder="Category"> <!--Change this to the select thing later-->
+            <input type="text" name="image" id="image-1"> <!--Generate this input as many times as images already loaded into the product (or at least load once in case the user wants to add images)-->
+            <input type="text" name="colors" id="colors" placeholder="Colors">
+            <input type="text" name="sizes" id="sizes" placeholder="Sizes">
+            <input type="text" name="inventory-space" id="inventory-space" placeholder="Inventory Space">
+            <input type="text" name="price" id="price" placeholder="Original Price">
+            <input type="text" name="discount-price" id="discount-price" placeholder="Discount Price (Optional)">
+        </div>
     </div>
 </body>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+
+        const edit_btn = document.getElementById("edit-btn")
+        const create_btn = document.getElementById("create-btn")
+        const create_container = document.getElementById("div-content")
+        const edit_container = document.getElementById("div-edit")
+        const product_id_input = document.getElementById("product-id-input")
+        const search_btn = document.getElementById("search-btn")
+
+        create_btn.addEventListener("click", function() {
+            edit_container.style.display = "none"
+            create_container.style.display = "flex"
+        })
+
+        edit_btn.addEventListener("click", function() {
+            create_container.style.display = "none"
+            edit_container.style.display = "flex"
+        })
+
+        product_id_input.addEventListener("keydown", function(event) {
+            if (event.key == "Enter") {
+                event.preventDefault();
+                search_btn.click()
+            }
+        })
+
+        search_btn.addEventListener("click", async function() {
+            const product_id = product_id_input.value.trim();
+            const res = await fetch(`/api/product/${product_id}`);
+            const product = await res.json()
+
+
+            // console.log(product.name) // for debugging purposes
+        })
+
         // elements 
         const product_title_input = document.getElementById("product-title-input")
 

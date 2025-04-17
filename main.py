@@ -142,7 +142,6 @@ def product_page():
     return render_template('product_page.html')
 
 
-
 @app.route('/api/create_product', methods=['POST'])
 def create_product():
     data = request.get_json()
@@ -201,6 +200,27 @@ def get_products():
         })
 
     return jsonify({"products": product_list})
+
+@app.route('/api/product/<int:product_id>', methods=["GET"])
+def get_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    product_data = {
+        "product_id": product.product_id,
+        "name": product.name,
+        "description": product.description,
+        "warranty_period": product.warranty_period,
+        "category": product.category,
+        "images": product.images,
+        "colors": product.colors,
+        "sizes": product.sizes,
+        "inventory_space": product.inventory_space,
+        "price": product.price,
+        "discount_price": product.discount_price,
+        "discount_time": product.discount_time.isoformat() if product.discount_time else None
+    }
+
+    return jsonify(product_data)
 
 if __name__ == '__main__':
         app.run(debug=True)
