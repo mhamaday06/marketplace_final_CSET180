@@ -75,6 +75,12 @@
         border-radius: 5px;
     }
 
+    #cart-btn-container {
+        display: flex;
+        justify-content: right;
+        
+    }
+
     #filter-container {
         display: flex;
         justify-content: center;
@@ -146,6 +152,10 @@
             <li><a href=" {{ url_for('product_page') }} ">Product Page</a></li>
         </ul>
     </nav>
+
+    <div id="cart-btn-container">
+        <button id="cart-btn">View Cart</button>
+    </div>
 
     <h1>Product Page</h1>
 
