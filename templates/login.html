@@ -56,6 +56,7 @@
             <li><a href="{{ url_for('signup') }}">Signup</a></li>
             <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
             <li><a href=" {{ url_for('product_page') }} ">Product Page</a></li>
+            <li><a href="{{ url_for('accounts') }}"></a>Accounts</li>
         </ul>
     </nav>
     <form method="POST" action="/login">
@@ -68,6 +69,20 @@
     </form>
 </body>
 <script>
-    
+    document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    const usernameInput = document.querySelector('input[name="username"]');
+    const passwordInput = document.querySelector('input[name="password"]');
+
+    form.addEventListener("submit", function (e) {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        alert("Both fields are required!");
+        e.preventDefault();
+        return;
+    }});
+});
 </script>
 </html>
