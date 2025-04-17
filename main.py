@@ -90,9 +90,26 @@ class Chat(db.Model):
 def index():
     return render_template('index.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
 
+        if not username or not password:
+            error = "Both fields (Username and Password) are required"
+            return render_template('login.html', error=error)
+
+        user_account = User.query.filter_by(username=username).first()
+        if user_account and bcrypt.checkpw(password.encode('utf-8'), user_account.password.encode('utf-8')):
+            session['username'] = username
+            session['account_type'] = 'user'
+            session['password'] = password  
+
+            return redirect('/accounts') 
+
+        error = "Invalid username or password"
+        return render_template('login.html', error=error)
     return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
