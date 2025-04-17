@@ -90,6 +90,14 @@ class Chat(db.Model):
 def index():
     return render_template('index.html')
 
+@app.route('/cart')
+def cart():
+    return render_template('cart.html')
+
+@app.route('/account', methods=['GET', 'POST'])
+def accounts():
+    return render_template('accounts.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
