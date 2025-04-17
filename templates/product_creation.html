@@ -177,7 +177,20 @@
             <input type="text" name="title" id="title" placeholder="Product Title">
             <input type="text" name="product-description" id="description" placeholder="Product Description">
             <input type="text" name="warranty" id="warranty-period" placeholder="Warranty Period (Optional)">
-            <input type="text" name="category" id="category" placeholder="Category"> <!--Change this to the select thing later-->
+            <select name="category-select" id="product-category-input-edit">
+                <option value="">Select a Category</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Apparel">Apparel</option>
+                <option value="Footwear">Footwear</option>
+                <option value="Outdoor">Outdoor</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Gaming">Gaming</option>
+                <option value="Home">Home</option>
+                <option value="Books">Books</option>
+                <option value="Health">Health</option>
+                <option value="Fitness">Fitness</option>
+                <option value="Toys">Toys</option>
+            </select> <!--Change this to the select thing later-->
             <input type="text" name="image" id="image-1"> <!--Generate this input as many times as images already loaded into the product (or at least load once in case the user wants to add images)-->
             <input type="text" name="colors" id="colors" placeholder="Colors">
             <input type="text" name="sizes" id="sizes" placeholder="Sizes">
@@ -222,6 +235,7 @@
 
 
             // console.log(product.name) // for debugging purposes
+            
         })
 
         // elements 
