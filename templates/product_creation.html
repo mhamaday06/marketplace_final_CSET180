@@ -112,7 +112,7 @@
     }
 
     #div-edit {
-        display: flex;
+        display: none;
         align-items: center;
         justify-content: center;
         flex-direction: column;
@@ -174,7 +174,7 @@
             <input type="text" name="product-id-input" id="product-id-input" placeholder="Product ID">
             <button id="search-btn">Search</button>
 
-            <input type="text" name="title" id="title" placeholder="Product Title">
+            <!-- <input type="text" name="title" id="title" placeholder="Product Title">
             <input type="text" name="product-description" id="description" placeholder="Product Description">
             <input type="text" name="warranty" id="warranty-period" placeholder="Warranty Period (Optional)">
             <select name="category-select" id="product-category-input-edit">
@@ -190,13 +190,13 @@
                 <option value="Health">Health</option>
                 <option value="Fitness">Fitness</option>
                 <option value="Toys">Toys</option>
-            </select> <!--Change this to the select thing later-->
-            <input type="text" name="image" id="image-1"> <!--Generate this input as many times as images already loaded into the product (or at least load once in case the user wants to add images)-->
+            </select>
+            <input type="text" name="image" id="image-1">
             <input type="text" name="colors" id="colors" placeholder="Colors">
             <input type="text" name="sizes" id="sizes" placeholder="Sizes">
             <input type="text" name="inventory-space" id="inventory-space" placeholder="Inventory Space">
             <input type="text" name="price" id="price" placeholder="Original Price">
-            <input type="text" name="discount-price" id="discount-price" placeholder="Discount Price (Optional)">
+            <input type="text" name="discount-price" id="discount-price" placeholder="Discount Price (Optional)"> -->
         </div>
     </div>
 </body>
@@ -233,10 +233,42 @@
             const res = await fetch(`/api/product/${product_id}`);
             const product = await res.json()
 
+            const html = `
+                <input type="text" id="title" value="${product.name}" placeholder="Product Title">
+                <input type="text" id="description" value="${product.description}" placeholder="Product Description">
+                <input type="text" id="warranty-period" value="${product.warranty_period || ''}" placeholder="Warranty Period (Optional)">
+                <select id="product-category-input-edit">
+                    <option value="">Select a Category</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Apparel">Apparel</option>
+                    <option value="Footwear">Footwear</option>
+                    <option value="Outdoor">Outdoor</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Gaming">Gaming</option>
+                    <option value="Home">Home</option>
+                    <option value="Books">Books</option>
+                    <option value="Health">Health</option>
+                    <option value="Fitness">Fitness</option>
+                    <option value="Toys">Toys</option>
+                </select>
+                <input type="text" id="image-1" value="${product.images}" placeholder="Image URL">
+                <input type="text" id="colors" value="${product.colors}" placeholder="Colors">
+                <input type="text" id="sizes" value="${product.sizes}" placeholder="Sizes">
+                <input type="text" id="inventory-space" value="${product.inventory_space}" placeholder="Inventory Space">
+                <input type="text" id="price" value="${product.price}" placeholder="Original Price">
+                <input type="text" id="discount-price" value="${product.discount_price || ''}" placeholder="Discount Price (Optional)">
+            `;
 
-            // console.log(product.name) // for debugging purposes
-            
-        })
+            // Inject the HTML into the div-edit container
+            edit_container.innerHTML = html;
+
+            // Select the dropdown and update its selected value
+            const categorySelect = document.getElementById("product-category-input-edit");
+            if (product.category) {
+                categorySelect.value = product.category;
+            }
+        });
+
 
         // elements 
         const product_title_input = document.getElementById("product-title-input")
