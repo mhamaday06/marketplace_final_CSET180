@@ -74,6 +74,15 @@
         border-radius: 5px;
     }
 
+    select {
+        font-size: 20px;
+        padding: 15px 10px;
+        width: 100%;
+        border: 1px transparent solid;
+        border-radius: 5px;
+        color: black;
+    }
+
     #btn-container {
         display: flex;
         justify-content: center;
@@ -117,6 +126,10 @@
         justify-content: center;
         flex-direction: column;
         gap: 15px;
+    }
+
+    #apply-btn {
+        display: none;
     }
 
 </style>
@@ -173,6 +186,7 @@
         <div id="div-edit">
             <input type="text" name="product-id-input" id="product-id-input" placeholder="Product ID">
             <button id="search-btn">Search</button>
+            <button id="apply-btn">Apply</button>
 
             <!-- <input type="text" name="title" id="title" placeholder="Product Title">
             <input type="text" name="product-description" id="description" placeholder="Product Description">
@@ -231,7 +245,7 @@
         search_btn.addEventListener("click", async function() {
             const product_id = product_id_input.value.trim();
             const res = await fetch(`/api/product/${product_id}`);
-            const product = await res.json()
+            const product = await res.json() // you can select which properties you want in the JSON object by using dot notation, as seen below
 
             const html = `
                 <input type="text" id="title" value="${product.name}" placeholder="Product Title">
@@ -257,6 +271,7 @@
                 <input type="text" id="inventory-space" value="${product.inventory_space}" placeholder="Inventory Space">
                 <input type="text" id="price" value="${product.price}" placeholder="Original Price">
                 <input type="text" id="discount-price" value="${product.discount_price || ''}" placeholder="Discount Price (Optional)">
+                <button id="apply-btn">Apply</button>
             `;
 
             // Inject the HTML into the div-edit container
@@ -267,8 +282,36 @@
             if (product.category) {
                 categorySelect.value = product.category;
             }
-        });
+            const apply_btn = document.getElementById("apply-btn");
+            apply_btn.style.display = "flex"
+            apply_btn.addEventListener("click", async function () {
+                const product_id = product_id_input.value.trim();
 
+                const updated_product = {
+                    name: document.getElementById("title").value,
+                    description: document.getElementById("description").value,
+                    warranty_period: document.getElementById("warranty-period").value,
+                    category: document.getElementById("product-category-input-edit").value,
+                    images: document.getElementById("image-1").value,
+                    colors: document.getElementById("colors").value,
+                    sizes: document.getElementById("sizes").value,
+                    inventory_space: document.getElementById("inventory-space").value,
+                    price: document.getElementById("price").value,
+                    discount_price: document.getElementById("discount-price").value
+                };
+
+                const res = await fetch(`/api/product/${product_id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(updated_product)
+                });
+
+                const result = await res.json();
+                alert(result.message || "Product updated!");
+            });
+        });
 
         // elements 
         const product_title_input = document.getElementById("product-title-input")

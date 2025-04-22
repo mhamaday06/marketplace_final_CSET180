@@ -232,10 +232,29 @@ def get_products():
 
     return jsonify({"products": product_list})
 
-@app.route('/api/product/<int:product_id>', methods=["GET"])
-def get_product(product_id):
-    product = Product.query.get_or_404(product_id)
+@app.route('/api/product/<int:product_id>', methods=["GET", "PUT"])
+def get_or_update_product(product_id):
+    # Edit Functionality
+    if request.method == "PUT":
+        data = request.get_json()
+        product = Product.query.get_or_404(product_id)
 
+        product.name = data.get("name")
+        product.description = data.get("description")
+        product.warranty_period = data.get("warranty_period")
+        product.category = data.get("category")
+        product.images = data.get("images")
+        product.colors = data.get("colors")
+        product.sizes = data.get("sizes")
+        product.inventory_space = int(data.get("inventory_space"))
+        product.price = float(data.get("price"))
+        product.discount_price = float(data["discount_price"]) if data.get("discount_price") else None
+
+        db.session.commit()
+        return jsonify({"message": "Product updated successfully"})
+
+    # GET fallback
+    product = Product.query.get_or_404(product_id)
     product_data = {
         "product_id": product.product_id,
         "name": product.name,
@@ -250,8 +269,8 @@ def get_product(product_id):
         "discount_price": product.discount_price,
         "discount_time": product.discount_time.isoformat() if product.discount_time else None
     }
-
     return jsonify(product_data)
+
 
 if __name__ == '__main__':
         app.run(debug=True)
