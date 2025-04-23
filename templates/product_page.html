@@ -75,6 +75,13 @@
         border-radius: 5px;
     }
 
+    img {
+        display: flex;
+        width: 200px;
+        height: auto;
+        justify-content: center;
+    }
+
     #cart-btn-container {
         display: flex;
         justify-content: right;
@@ -175,6 +182,7 @@
             <option value="Home">Home</option>
             <option value="Books">Books</option>
             <option value="Health">Health</option>
+            <option value="Food">Food</option>
             <option value="Fitness">Fitness</option>
             <option value="Toys">Toys</option>
         </select>
@@ -202,6 +210,7 @@
                 div.classList.add("product-card");
                 div.innerHTML = `
                     <h2>${product.name}</h2>
+                    <img class="images" id="first-image" src="${product.images}">
                     <p><strong>Price:</strong> $${product.price}</p>
                     <p><strong>Description:</strong> ${product.description}</p>
                     <p><strong>Colors:</strong> ${product.colors}</p>
