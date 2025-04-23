@@ -56,7 +56,18 @@
             <li><a href="{{ url_for('accounts') }}"></a>Accounts</li>
         </ul>
     </nav>
-
+    <div class="div-body">
+        <div class="div-body-content">
+            <h1>Accounts</h1>
+            {% block body %}
+            <select id="filter-select">
+                <option value="vendor"{% if selected_type == 'Vendor' %}selected{% endif %}>Vendor</option>
+                <option value="admin" {% if selected_type == 'Admin' %}selected{% endif %}>Admin</option>
+                
+            </select>
+        </div>
+    </div>
+{% endblock %}
 </body>
 <script>
 
