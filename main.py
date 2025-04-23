@@ -11,7 +11,6 @@ conn = engine.connect()
 
 app = Flask(__name__)
 
-
 # Setup MySQL connection for Flask-SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql://root:cset155@localhost/ecommerce_application"
 app.config['SECRET_KEY'] = 'mysecretkey123'
@@ -178,6 +177,7 @@ def create_product():
     data = request.get_json()
 
     name = data.get("product_title")
+    images = data.get("product_image")
     description = data.get("product_description")
     warranty_period = data.get("product_warranty")
     product_category = data.get("product_category")
@@ -187,16 +187,15 @@ def create_product():
     price = data.get("price")
     
     # Default values for now — update these if you want full support later
-    images = "default.jpg"  # You can replace this with actual image handling
     discount_price = None
     discount_time = None
 
     product = Product(
         name=name,
+        images=images,
         description=description,
         warranty_period=warranty_period,
         category=product_category,
-        images=images,
         colors=colors,
         sizes=sizes,
         inventory_space=int(inventory_space),

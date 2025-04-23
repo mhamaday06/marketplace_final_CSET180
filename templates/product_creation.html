@@ -173,6 +173,7 @@
                 <option value="Home">Home</option>
                 <option value="Books">Books</option>
                 <option value="Health">Health</option>
+                <option value="Food">Food</option>
                 <option value="Fitness">Fitness</option>
                 <option value="Toys">Toys</option>
             </select>
@@ -262,6 +263,7 @@
                     <option value="Home">Home</option>
                     <option value="Books">Books</option>
                     <option value="Health">Health</option>
+                    <option value="Food">Food</option>
                     <option value="Fitness">Fitness</option>
                     <option value="Toys">Toys</option>
                 </select>
@@ -316,6 +318,8 @@
         // elements 
         const product_title_input = document.getElementById("product-title-input")
 
+        const product_image_input = document.getElementById("product-image-1-input")
+
         const product_description_input = document.getElementById("product-description-input")
 
         const add_image_btn = document.getElementById("add-image-btn")
@@ -346,6 +350,7 @@
 
         create_product_btn.addEventListener("click", async function() {
             const product_title = product_title_input.value
+            const product_image = product_image_input.value
             const product_description = product_description_input.value
             const product_warranty = product_warranty_input.value
             const product_category = product_category_input.value
@@ -359,6 +364,7 @@
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     product_title: product_title,
+                    product_image: product_image,
                     product_description: product_description,
                     product_warranty: product_warranty,
                     product_category: product_category,
