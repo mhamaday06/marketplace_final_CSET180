@@ -65,11 +65,22 @@
                 <option value="admin" {% if selected_type == 'Admin' %}selected{% endif %}>Admin</option>
                 
             </select>
+            <div id="account-list">
+                <h2>{{ selected_type }} Accounts</h2>
+                <ul>
+                    {% for user in users %}
+                        <li>{{ user.name }} ({{ user.username }}) - {{ user.email }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     </div>
 {% endblock %}
 </body>
 <script>
-
+    function filterAccounts() {
+        var type = document.getElementById("filter-select").value;
+        window.location.href = "/account?type=" + type;
+    }
 </script>
 </html>
