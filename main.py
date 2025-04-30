@@ -5,6 +5,7 @@ from enum import IntEnum
 import random
 import bcrypt
 import mysql.connector
+from datetime import datetime
 conn_str = "mysql://root:cset155@localhost/ecommerce_application"
 engine = create_engine(conn_str, echo = True)
 conn = engine.connect()
@@ -89,12 +90,110 @@ class Chat(db.Model):
 def index():
     return render_template('index.html')
 
-@app.route('/cart')
+@app.route('/api/cart', methods=['GET'])
 def cart():
-    return render_template('cart.html')
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user = User.query.filter_by(username=session['username']).first()
+    cart_items = CartItem.query.filter_by(user_id=user.user_id).all()
+
+    result = []
+    for item in cart_items:
+        product = Product.query.get(item.product_id)
+        result.append({
+            "name": product.name,
+            "price": product.price,
+            "quantity": item.quantity
+        })
+
+    return jsonify({"cart": result})
+
+@app.route('/api/add_to_cart', methods=['POST'])
+def add_to_cart():
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    product_id = data.get('product_id')
+    quantity = data.get('quantity', 1)
+
+    user = User.query.filter_by(username=session['username']).first()
+    existing_item = CartItem.query.filter_by(user_id=user.user_id, product_id=product_id).first()
+
+    if existing_item:
+        existing_item.quantity += quantity
+    else:
+        new_item = CartItem(user_id=user.user_id, product_id=product_id, quantity=quantity)
+        db.session.add(new_item)
+
+    db.session.commit()
+    return jsonify({'message': 'Item added to cart'})
+
+@app.route('/api/remove_from_cart', methods=['POST'])
+def remove_from_cart():
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    product_id = data.get('product_id')
+
+    user = User.query.filter_by(username=session['username']).first()
+    item = CartItem.query.filter_by(user_id=user.user_id, product_id=product_id).first()
+
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+        return jsonify({'message': 'Item removed'})
+    else:
+        return jsonify({'error': 'Item not found in cart'}), 404
+    
+@app.route('/api/checkout', methods=['POST'])
+def checkout():
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user = User.query.filter_by(username=session['username']).first()
+    cart_items = CartItem.query.filter_by(user_id=user.user_id).all()
+
+    if not cart_items:
+        return jsonify({'error': 'Cart is empty'}), 400
+
+    total_price = 0
+    order_items = []
+
+    for item in cart_items:
+        product = Product.query.get(item.product_id)
+        total_price += product.price * item.quantity
+        order_items.append(f"{product.name} x{item.quantity}")
+
+    new_order = UnconfirmedOrder(
+        user_id=user.user_id,
+        vendor_id=1,  
+        date=datetime.now(),
+        items=", ".join(order_items),
+        price=total_price,
+        order_status="pending"
+    )
+    db.session.add(new_order)
+
+    
+    for item in cart_items:
+        db.session.delete(item)
+
+    db.session.commit()
+    return jsonify({'message': 'Checkout complete. Thank you for your purchase!'})
 
 @app.route('/account', methods=['GET', 'POST'])
 def accounts():
+    selected_type = request.args.get('type', 'vendor')  
+
+    if selected_type.lower() == 'vendor':
+        users = User.query.filter_by(user_type=2).all()  
+    elif selected_type.lower() == 'admin':
+        users = User.query.filter_by(user_type=3).all()  
+    else:
+        users = [] 
     return render_template('accounts.html')
 
 @app.route('/login', methods=['GET', 'POST'])
