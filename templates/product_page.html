@@ -76,7 +76,7 @@
     }
 
     select {
-        font-size: 30px;
+        font-size: 20px;
         padding: 15px 10px;
         width: 275px;
         border: 1px transparent solid;
@@ -105,6 +105,15 @@
         gap: 10px;
     }
 
+    #search-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+        width: 310px;
+    }
+
     #search-btn-container {
         display: flex;
         justify-content: center;
@@ -130,7 +139,6 @@
     .product-card {
         display: flex;
         flex-direction: column;
-        /* border: 1px red solid; */
         width: 400px;
         margin: 10px;
         justify-content: space-between; /* helps align "Add to Cart" at the bottom */
@@ -192,7 +200,9 @@
     <div id="filter-container">
 
         <div id="search-container">
-            <input type="text" name="search_input" id="search-input" placeholder="Search for your item here...">
+            <input type="text" name="search_input" id="search-input" placeholder="Search Product by Title / Description">
+            <input type="text" name="color_input" id="color-input" placeholder="Search Product by Color(s)">
+            <input type="text" name="size_input" id="size-input" placeholder="Search Product by Size(s)">
         </div>
 
         <select name="filter-products" id="filter-select">
@@ -209,6 +219,12 @@
             <option value="Food">Food</option>
             <option value="Fitness">Fitness</option>
             <option value="Toys">Toys</option>
+        </select>
+
+        <select name="availability-filter" id="availability-filter">
+            <option value="">Availability</option>
+            <option value="Available">Available</option>
+            <option value="Not-Available">Not Available</option>
         </select>
 
     </div>
@@ -230,6 +246,7 @@
         const search_bar_input = document.getElementById("search-input")
         const search_btn = document.getElementById("search-btn")
         const select_tag = document.getElementById("filter-select")
+        const availability_select_tag = document.getElementById("availability-filter")
         let allProducts = [] // will hold all product cards, which'll be used with sorting later
 
         async function loadProducts() {
@@ -240,9 +257,9 @@
             renderProducts(allProducts); // render all products initially
         }
 
-        loadProducts();
+        loadProducts(); // loads all products, which uses the renderProducts function to do so, which you can see below:
 
-        function renderProducts(products) {
+        function renderProducts(products) { // renders products on page
             const container = document.getElementById("div-content");
             container.innerHTML = "";
 
@@ -265,28 +282,6 @@
         }
 
         let scoredProducts = [];
-
-        allProducts.forEach(product => {
-            let counter = 0;
-            const search_bar = search_bar_input.value.trim().toLowerCase();
-            const selectedCategory = select_tag.value.toLowerCase();
-
-            const name = product.name.toLowerCase();
-            const description = product.description.toLowerCase();
-            const category = product.category.toLowerCase();
-
-            if (name.includes(search_bar)) counter += 2;
-            if (description.includes(search_bar)) counter += 1;
-            if (category === selectedCategory && selectedCategory !== "") counter += 1;
-
-            if (counter > 0) {
-                scoredProducts.push({ product, score: counter });
-            }
-        });
-
-        // Sort & render
-        scoredProducts.sort((a, b) => b.score - a.score);
-        renderProducts(scoredProducts.map(p => p.product));
 
         const filter_options = document.getElementsByTagName("option")
         select_tag.addEventListener("change", function() {
@@ -314,13 +309,32 @@
             }
         })
 
+        availability_select_tag.addEventListener("change", function() {
+            const selected_availability = availability_select_tag.value.toLowerCase();
+
+            if (selected_availability === "") {
+                renderProducts(allProducts);
+                return;
+            }
+
+            const filteredProducts = allProducts.filter(product => {
+                const available = product.inventory_space >= 1;
+
+                if (selected_availability === "available") return available;
+                if (selected_availability === "not-available") return !available;
+            });
+
+            renderProducts(filteredProducts);
+        });
+
+
         search_btn.addEventListener("click", function() {
-            const search_bar = search_bar_input.value.trim().toLowerCase();
-            const selectedCategory = select_tag.value.toLowerCase();
+            const search_bar = search_bar_input.value.trim().toLowerCase(); // make value as easy to work with as possible
+            const selectedCategory = select_tag.value.toLowerCase(); // same here as above but for category
 
             let scoredProducts = [];
 
-            allProducts.forEach(product => {
+            allProducts.forEach(product => { // sort the products based on score here, which will run whenever the filter button's pressed
                 let counter = 0;
 
                 const name = product.name.toLowerCase();
@@ -336,9 +350,9 @@
                 }
             });
 
-            // Sort and re-render
-            scoredProducts.sort((a, b) => b.score - a.score);
-            renderProducts(scoredProducts.map(p => p.product));
+            // Sort & render
+            scoredProducts.sort((a, b) => b.score - a.score); // the sort function here will ensure the element with the greatest score is at the top, as the items with the greatest score will pass the conditional given
+            renderProducts(scoredProducts.map(p => p.product)); // this turns the scoredProducts array into raw data for the renderProducts function to work with (meaning a JSON object)
         });
     })
 </script>
