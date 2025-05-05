@@ -2,10 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Landing Page</title>
+    <title>Staff Login</title>
 </head>
-
 <style>
     * {
         box-sizing: border-box;
@@ -45,9 +43,7 @@
         color: black;
     }
 
-    
 </style>
-
 <body>
     <nav>
         <ul>
@@ -60,9 +56,18 @@
             <li><a href="{{ url_for('accounts') }}">Accounts</a></li>
         </ul>
     </nav>
+    <h2>Staff Login (Admin & Vendor)</h2>
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    <form method="POST">
+        <label for="username">Username:</label>
+        <input type="text" name="username" required><br><br>
+        
+        <label for="password">Password:</label>
+        <input type="password" name="password" required><br><br>
+        
+        <button type="submit">Login</button>
+    </form>
 </body>
-
-<script>
-    
-</script>
 </html>

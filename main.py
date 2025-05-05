@@ -186,15 +186,11 @@ def checkout():
 
 @app.route('/account', methods=['GET', 'POST'])
 def accounts():
-    selected_type = request.args.get('type', 'vendor')  
-
-    if selected_type.lower() == 'vendor':
-        users = User.query.filter_by(user_type=2).all()  
-    elif selected_type.lower() == 'admin':
-        users = User.query.filter_by(user_type=3).all()  
-    else:
-        users = [] 
-    return render_template('accounts.html')
+    user_type = request.args.get('type', 'Vendor')  
+    if user_type.lower() not in ['vendor', 'admin']:
+        user_type = 'Vendor'  
+    users = User.query.filter_by(role=user_type.capitalize()).all()
+    return render_template('accounts.html', users=users, selected_type=user_type.capitalize())
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -202,21 +198,51 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        if not username or not password:
-            error = "Both fields (Username and Password) are required"
-            return render_template('login.html', error=error)
+        user = User.query.filter_by(username=username).first()
 
-        user_account = User.query.filter_by(username=username).first()
-        if user_account and bcrypt.checkpw(password.encode('utf-8'), user_account.password.encode('utf-8')):
-            session['username'] = username
-            session['account_type'] = 'user'
-            session['password'] = password  
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            session['username'] = user.username
+            session['user_type'] = user.user_type
+            session['user_id'] = user.user_id
 
-            return redirect('/accounts') 
+            # Redirect based on user type
+            if user.user_type == 1:
+                return redirect('/')  # customer homepage
+            elif user.user_type == 2:
+                return redirect('/vendor_dashboard')  # assume this exists
+            elif user.user_type == 3:
+                return redirect('/admin_dashboard')  # assume this exists
 
         error = "Invalid username or password"
         return render_template('login.html', error=error)
+
     return render_template('login.html')
+
+@app.route('/staff_login', methods=['GET', 'POST'])
+def staff_login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        if not username or not password:
+            return render_template('staff_login.html', error="Both fields are required")
+
+        user = User.query.filter_by(username=username).first()
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            if user.user_type in [2, 3]:  
+                session['username'] = user.username
+                session['user_id'] = user.user_id
+                session['user_type'] = user.user_type
+
+                if user.user_type == 2:
+                    return redirect('/vendor_dashboard')
+                else:
+                    return redirect('/admin_dashboard')
+            else:
+                return render_template('staff_login.html', error="Access denied for non-staff users.")
+        return render_template('staff_login.html', error="Invalid username or password")
+
+    return render_template('staff_login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():

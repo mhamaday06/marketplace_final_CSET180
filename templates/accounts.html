@@ -62,8 +62,7 @@
             {% block body %}
             <select id="filter-select">
                 <option value="vendor"{% if selected_type == 'Vendor' %}selected{% endif %}>Vendor</option>
-                <option value="admin" {% if selected_type == 'Admin' %}selected{% endif %}>Admin</option>
-                
+                <option value="admin"{% if selected_type == 'Admin' %}selected{% endif %}>Admin</option>
             </select>
             <div id="account-list">
                 <h2>{{ selected_type }} Accounts</h2>
