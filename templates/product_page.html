@@ -202,7 +202,7 @@
         <div id="search-container">
             <input type="text" name="search_input" id="search-input" placeholder="Search Product by Title / Description">
             <input type="text" name="color_input" id="color-input" placeholder="Search Product by Color(s)">
-            <input type="text" name="size_input" id="size-input" placeholder="Search Product by Size(s)">
+            <input type="text" name="size_input" id="size-input" placeholder="Search Product by Size">
         </div>
 
         <select name="filter-products" id="filter-select">
@@ -247,6 +247,8 @@
         const search_btn = document.getElementById("search-btn")
         const select_tag = document.getElementById("filter-select")
         const availability_select_tag = document.getElementById("availability-filter")
+        const color_input = document.getElementById("color-input")
+        const sizes_input = document.getElementById("size-input")
         let allProducts = [] // will hold all product cards, which'll be used with sorting later
 
         async function loadProducts() {
@@ -331,6 +333,8 @@
         search_btn.addEventListener("click", function() {
             const search_bar = search_bar_input.value.trim().toLowerCase(); // make value as easy to work with as possible
             const selectedCategory = select_tag.value.toLowerCase(); // same here as above but for category
+            const colors = color_input.value.toLowerCase().split(",");
+            const size = sizes_input.value.toLowerCase();
 
             let scoredProducts = [];
 
@@ -340,18 +344,28 @@
                 const name = product.name.toLowerCase();
                 const description = product.description.toLowerCase();
                 const category = product.category.toLowerCase();
+                const product_colors = product.colors.toLowerCase();
+                const sizes = product.sizes.trim().toLowerCase();
 
-                if (name.includes(search_bar)) counter += 2;
+                if (name.includes(search_bar)) counter += 3;
                 if (description.includes(search_bar)) counter += 1;
                 if (category === selectedCategory && selectedCategory !== "") counter += 1;
+                if (sizes === size && size !== "") counter += 4;
 
+                colors.forEach(color => {
+                    color = color.trim();
+                    if (color && product_colors.includes(color)) {
+                        counter += 2;
+                    }
+                });
+                
                 if (counter > 0) {
                     scoredProducts.push({ product, score: counter });
                 }
             });
 
             // Sort & render
-            scoredProducts.sort((a, b) => b.score - a.score); // the sort function here will ensure the element with the greatest score is at the top, as the items with the greatest score will pass the conditional given
+            scoredProducts.sort((a, b) => b.score - a.score); // the sort function here will ensure the element with the greatest score is at the top, as the items with the greatest score will pass the conditional given the most
             renderProducts(scoredProducts.map(p => p.product)); // this turns the scoredProducts array into raw data for the renderProducts function to work with (meaning a JSON object)
         });
     })
