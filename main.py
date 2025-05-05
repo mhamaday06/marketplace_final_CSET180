@@ -29,6 +29,7 @@ class User(db.Model):
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
+    vendor = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=False)
     warranty_period = db.Column(db.String(20))
     category = db.Column(db.String(50))
@@ -177,7 +178,8 @@ def create_product():
     data = request.get_json()
 
     name = data.get("product_title")
-    images = data.get("product_image")
+    vendor = data.get("vendor")
+    images = data.get("product_images")
     description = data.get("product_description")
     warranty_period = data.get("product_warranty")
     product_category = data.get("product_category")
@@ -194,6 +196,7 @@ def create_product():
         name=name,
         images=images,
         description=description,
+        vendor=vendor,
         warranty_period=warranty_period,
         category=product_category,
         colors=colors,

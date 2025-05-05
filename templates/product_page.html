@@ -129,6 +129,10 @@
         padding: 0px 5px 5px 5px;
     }
 
+    .product-card img {
+        margin: 0 auto;
+    }
+
     .product-card strong {
         font-size: 18px;
     }
@@ -171,6 +175,10 @@
 
     <div id="filter-container">
 
+        <div id="search-container">
+            <input type="text" name="search_input" id="search-input" placeholder="Search for your item here...">
+        </div>
+
         <select name="filter-products" id="filter-select">
             <option value="">All Categories</option>
             <option value="Electronics">Electronics</option>
@@ -188,6 +196,10 @@
         </select>
 
     </div>
+
+    <div id="search-btn-container">
+        <button id="search-btn">Search</button>
+    </div>
     
     <div class="div-body">
         <div class="div-content" id="div-content">
@@ -199,6 +211,10 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        const search_bar_input = document.getElementById("search-input")
+        const search_btn = document.getElementById("search-btn")
+        const select_tag = document.getElementById("filter-select")
+
         async function loadProducts() {
             const res = await fetch("/api/get_products");
             const data = await res.json();
@@ -216,6 +232,7 @@
                     <p><strong>Colors:</strong> ${product.colors}</p>
                     <p><strong>Sizes:</strong> ${product.sizes}</p>
                     <p><strong>Category:</strong> ${product.category}</p>
+                    <p><strong>Vendor:</strong> ${product.vendor}</p>
                     <button id="add-cart-btn">Add to Cart</button>
                 `;
                 container.appendChild(div);
@@ -224,7 +241,6 @@
         
         loadProducts();
 
-        const select_tag = document.getElementById("filter-select")
         const filter_options = document.getElementsByTagName("option")
         select_tag.addEventListener("change", function() {
             
@@ -242,7 +258,49 @@
                 }
             });
         })
+
+        search_bar_input.addEventListener("keydown", function(event) {
+            if (event.key == "Enter") {
+                event.preventDefault()
+                search_btn.click()
+            }
+        })
+
+        search_btn.addEventListener("click", function() {
+            // Grab values
+            const search_bar = search_bar_input.value.trim().toLowerCase()
+            const selectedCategory = select_tag.value;
+            const product_cards = Array.from(document.getElementsByClassName("product-card"));
+
+            // I'm thinking have a numerical score for each product, then display products as long as they have at least one point, starting with the products with the highest points first (as they're the most similar)
+            let points = [] 
+
+            product_cards.forEach(product => { // find out how close each product fits the filter values
+                let counter = 0
+
+                const name = product.querySelector("h2").textContent.toLowerCase();
+                const description = product.querySelector("p:nth-of-type(2)").textContent.toLowerCase();
+                const category = product.querySelector("p:nth-last-of-type(2)").textContent.replace("Category:", "").trim().toLowerCase();
+
+                if (name.includes(search_bar)) counter += 2;
+                if (description.includes(search_bar)) counter += 1;
+                if (category === selectedCategory) counter += 1;
+
+                scoredProducts.push({ element: product, score: points });
+                // Re-append elements based on order
+                const container = document.getElementById("div-content");
+                container.innerHTML = ""; // Clear old order
+
+                scoredProducts.forEach(({ element, score }) => {
+                    if (score > 0) {
+                        element.style.display = "flex";
+                        container.appendChild(element); // Maintain new order
+                    } else {
+                        element.style.display = "none";
+                    }
+                });  
+            });
+        });
     })
 </script>
-
 </html>
