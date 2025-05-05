@@ -75,6 +75,15 @@
         border-radius: 5px;
     }
 
+    select {
+        font-size: 30px;
+        padding: 15px 10px;
+        width: 275px;
+        border: 1px transparent solid;
+        border-radius: 5px;
+        color: black;
+    }
+
     img {
         display: flex;
         width: 200px;
@@ -92,7 +101,15 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #search-btn-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
     }
 
     .div-body {
@@ -197,7 +214,7 @@
     </div>
 
     <div id="search-btn-container">
-        <button id="search-btn">Search</button>
+        <button id="search-btn">Filter</button>
     </div>
     
     <div class="div-body">
@@ -213,14 +230,23 @@
         const search_bar_input = document.getElementById("search-input")
         const search_btn = document.getElementById("search-btn")
         const select_tag = document.getElementById("filter-select")
+        let allProducts = [] // will hold all product cards, which'll be used with sorting later
 
         async function loadProducts() {
             const res = await fetch("/api/get_products");
             const data = await res.json();
 
-            const container = document.getElementById("div-content");
+            allProducts = data.products; // store all products here
+            renderProducts(allProducts); // render all products initially
+        }
 
-            data.products.forEach(product => {
+        loadProducts();
+
+        function renderProducts(products) {
+            const container = document.getElementById("div-content");
+            container.innerHTML = "";
+
+            products.forEach(product => {
                 const div = document.createElement("div");
                 div.classList.add("product-card");
                 div.innerHTML = `
@@ -237,25 +263,48 @@
                 container.appendChild(div);
             });
         }
-        
-        loadProducts();
+
+        let scoredProducts = [];
+
+        allProducts.forEach(product => {
+            let counter = 0;
+            const search_bar = search_bar_input.value.trim().toLowerCase();
+            const selectedCategory = select_tag.value.toLowerCase();
+
+            const name = product.name.toLowerCase();
+            const description = product.description.toLowerCase();
+            const category = product.category.toLowerCase();
+
+            if (name.includes(search_bar)) counter += 2;
+            if (description.includes(search_bar)) counter += 1;
+            if (category === selectedCategory && selectedCategory !== "") counter += 1;
+
+            if (counter > 0) {
+                scoredProducts.push({ product, score: counter });
+            }
+        });
+
+        // Sort & render
+        scoredProducts.sort((a, b) => b.score - a.score);
+        renderProducts(scoredProducts.map(p => p.product));
 
         const filter_options = document.getElementsByTagName("option")
         select_tag.addEventListener("change", function() {
             
-            const select_tag_value = select_tag.value
-            const product_cards = Array.from(document.getElementsByClassName("product-card"));
+            const selectedCategory = select_tag.value.toLowerCase();
 
-            product_cards.forEach(product => {
-                const categoryText = product.querySelector("p:nth-last-of-type(1)").textContent; // grabs the category within product
-                const categoryValue = categoryText.replace("Category:", "").trim(); // good practice to assume there could be some whitespace here
+            // If no category is selected, show all products
+            if (selectedCategory === "") {
+                renderProducts(allProducts);
+                return;
+            }
 
-                if (select_tag.value === "" || categoryValue === select_tag.value) { // also checks if the user has 'All Categories' selected with first conditional
-                    product.style.display = "flex";
-                } else {
-                    product.style.display = "none";
-                }
-            });
+            // Filter by selected category
+            const filteredProducts = allProducts.filter(product =>
+                product.category.toLowerCase() === selectedCategory
+            );
+
+            renderProducts(filteredProducts);
         })
 
         search_bar_input.addEventListener("keydown", function(event) {
@@ -266,39 +315,30 @@
         })
 
         search_btn.addEventListener("click", function() {
-            // Grab values
-            const search_bar = search_bar_input.value.trim().toLowerCase()
-            const selectedCategory = select_tag.value;
-            const product_cards = Array.from(document.getElementsByClassName("product-card"));
+            const search_bar = search_bar_input.value.trim().toLowerCase();
+            const selectedCategory = select_tag.value.toLowerCase();
 
-            // I'm thinking have a numerical score for each product, then display products as long as they have at least one point, starting with the products with the highest points first (as they're the most similar)
-            let points = [] 
+            let scoredProducts = [];
 
-            product_cards.forEach(product => { // find out how close each product fits the filter values
-                let counter = 0
+            allProducts.forEach(product => {
+                let counter = 0;
 
-                const name = product.querySelector("h2").textContent.toLowerCase();
-                const description = product.querySelector("p:nth-of-type(2)").textContent.toLowerCase();
-                const category = product.querySelector("p:nth-last-of-type(2)").textContent.replace("Category:", "").trim().toLowerCase();
+                const name = product.name.toLowerCase();
+                const description = product.description.toLowerCase();
+                const category = product.category.toLowerCase();
 
                 if (name.includes(search_bar)) counter += 2;
                 if (description.includes(search_bar)) counter += 1;
-                if (category === selectedCategory) counter += 1;
+                if (category === selectedCategory && selectedCategory !== "") counter += 1;
 
-                scoredProducts.push({ element: product, score: points });
-                // Re-append elements based on order
-                const container = document.getElementById("div-content");
-                container.innerHTML = ""; // Clear old order
-
-                scoredProducts.forEach(({ element, score }) => {
-                    if (score > 0) {
-                        element.style.display = "flex";
-                        container.appendChild(element); // Maintain new order
-                    } else {
-                        element.style.display = "none";
-                    }
-                });  
+                if (counter > 0) {
+                    scoredProducts.push({ product, score: counter });
+                }
             });
+
+            // Sort and re-render
+            scoredProducts.sort((a, b) => b.score - a.score);
+            renderProducts(scoredProducts.map(p => p.product));
         });
     })
 </script>
