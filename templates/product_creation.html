@@ -156,6 +156,7 @@
 
     <div class="div-body">
         <div class="div-content" id="div-content">
+            <input type="text" name="vendor-name" id="vendor-input" placeholder="Vendor's Name">
             <input type="text" name="product-title" id="product-title-input" placeholder="Product Title">
             <input type="text" name="product-description" id="product-description-input" placeholder="Product Description">
             <div id="div-image-content">
@@ -250,6 +251,7 @@
             const product = await res.json() // you can select which properties you want in the JSON object by using dot notation, as seen below
 
             const html = `
+                <input type="text" name="vendor-name" id="vendor-input" placeholder="Vendor's Name" value="${product.vendor}">
                 <input type="text" id="title" value="${product.name}" placeholder="Product Title">
                 <input type="text" id="description" value="${product.description}" placeholder="Product Description">
                 <input type="text" id="warranty-period" value="${product.warranty_period || ''}" placeholder="Warranty Period (Optional)">
@@ -293,6 +295,7 @@
                 const updated_product = {
                     name: document.getElementById("title").value,
                     description: document.getElementById("description").value,
+                    vendor: document.getElementById("vendor-input").value,
                     warranty_period: document.getElementById("warranty-period").value,
                     category: document.getElementById("product-category-input-edit").value,
                     images: document.getElementById("image-1").value,
@@ -316,10 +319,13 @@
             });
         });
 
-        // elements 
         const product_title_input = document.getElementById("product-title-input")
 
-        const product_image_input = document.getElementById("product-image-1-input")
+        const vendor_input = document.getElementById("vendor-input")
+
+        const image_inputs = document.getElementsByClassName("image-url-inputs");
+        const image_urls = Array.from(image_inputs).map(input => input.value).filter(url => url.trim() !== "");
+        const product_image = image_urls.join(",");
 
         const product_description_input = document.getElementById("product-description-input")
 
@@ -340,33 +346,37 @@
         const create_product_btn = document.getElementById("create-product-btn")
 
         add_image_btn.addEventListener("click", function() {
-            const image_inputs = document.getElementsByClassName("image-url-inputs")
             const last_image_input = image_inputs[image_inputs.length - 1];
 
             const newId = `product-image-${image_inputs.length + 1}-input`;
-            const html = `<input type="text" name="product-images" id="${newId}" class="image-url-inputs" placeholder="url to image">`;
+            const html = `<input type="text" name="product-images" id="${newId}" class="image-url-inputs" placeholder="url for image">`;
 
             last_image_input.insertAdjacentHTML("afterend", html)
-        })  
+        })
 
-        create_product_btn.addEventListener("click", async function() {
-            const product_title = product_title_input.value
-            const product_image = product_image_input.value
-            const product_description = product_description_input.value
-            const product_warranty = product_warranty_input.value
-            const product_category = product_category_input.value
-            const available_colors = available_colors_input.value
-            const inventory_size = inventory_size_input.value
-            const sizes = sizes_input.value
-            const price = price_input.value
+        create_product_btn.addEventListener("click", async function () {
+            const product_title = product_title_input.value;
+            const vendor = vendor_input.value;
+            const product_description = product_description_input.value;
+            const product_warranty = product_warranty_input.value;
+            const product_category = product_category_input.value;
+            const available_colors = available_colors_input.value;
+            const inventory_size = inventory_size_input.value;
+            const sizes = sizes_input.value;
+            const price = price_input.value;
+
+            const image_inputs = document.getElementsByClassName("image-url-inputs");
+            const image_urls = Array.from(image_inputs).map(input => input.value).filter(url => url.trim() !== "");
+            const product_image = image_urls.join(",");
 
             const res = await fetch("/api/create_product", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     product_title: product_title,
-                    product_image: product_image,
+                    product_images: product_image,
                     product_description: product_description,
+                    vendor: vendor,
                     product_warranty: product_warranty,
                     product_category: product_category,
                     available_colors: available_colors,
@@ -375,8 +385,10 @@
                     price: price
                 })
             });
-        })
 
+            const result = await res.json();
+            alert(result.message || "Product created!");
+        });
     })
 </script>
 </html>
