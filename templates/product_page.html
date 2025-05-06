@@ -167,7 +167,7 @@
     </nav>
 
     <div id="cart-btn-container">
-        <button id="cart-btn">View Cart</button>
+        <a href="{{ url_for('cart') }}"><button id="cart-btn">View Cart</button></a>
     </div>
 
     <h1>Product Page</h1>
@@ -301,5 +301,9 @@
             });
         });
     })
+    const cartBtn = document.getElementById("cart-btn");
+cartBtn.addEventListener("click", function() {
+    window.location.href = "/cart";
+});
 </script>
 </html>
