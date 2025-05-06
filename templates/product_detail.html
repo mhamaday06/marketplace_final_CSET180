@@ -10,9 +10,9 @@
     #body-div {
         border: 1px red solid;
         display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 90%;
+        justify-content: space-around;
+        align-items: flex-start;
+        gap: 2rem;
     }
 
     #image-div {
@@ -37,7 +37,9 @@
         </div>
 
         <div id="description-div">
-
+            <h1 id="product-name"></h1>
+            <p id="product-description"></p>
+            <p id="product-price"></p>
         </div>
     </div>
 </body>
@@ -49,11 +51,10 @@
         .then(response => response.json())
         .then(product => {
             const imageUrls = product.images.split(',')
-            // Populate the page with the product info
             document.getElementById("product-name").textContent = product.name; // product title
             document.getElementById("product-description").textContent = product.description; // product description
             document.getElementById("product-price").textContent = `$${product.price}`; // product price
-            document.getElementById("product-title-image").src = imageUrls[0].trim(); // cover image
+            document.getElementById("product-title-image").src = imageUrls[0].trim(); // cover image, grabs first url
         })
         .catch(err => {
             console.error("Failed to load product:", err);
