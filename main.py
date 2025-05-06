@@ -440,6 +440,9 @@ def get_or_update_product(product_id):
     }
     return jsonify(product_data)
 
+@app.route('/product')
+def specific_product(product_id):
+    return render_template('')
 
 if __name__ == '__main__':
         app.run(debug=True)
