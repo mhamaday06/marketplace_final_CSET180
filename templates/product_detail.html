@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[Product]</title>
+</head>
+<style>
+
+    #body-div {
+        border: 1px red solid;
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-start;
+        gap: 2rem;
+    }
+
+    #image-div {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px blue solid;
+    }
+
+    #description-div {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px green solid;
+    }
+
+</style>
+<body>
+    <div id="body-div">
+        <div id="image-div">
+            <img id="product-title-image" src="" alt="product-image">
+        </div>
+
+        <div id="description-div">
+            <h1 id="product-name"></h1>
+            <p id="product-description"></p>
+            <p id="product-price"></p>
+        </div>
+    </div>
+</body>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    fetch(`/api/product/${id}`)
+        .then(response => response.json())
+        .then(product => {
+            const imageUrls = product.images.split(',')
+            document.getElementById("product-name").textContent = product.name; // product title
+            document.getElementById("product-description").textContent = product.description; // product description
+            document.getElementById("product-price").textContent = `$${product.price}`; // product price
+            document.getElementById("product-title-image").src = imageUrls[0].trim(); // cover image, grabs first url
+        })
+        .catch(err => {
+            console.error("Failed to load product:", err);
+        });
+
+</script>
+</html>

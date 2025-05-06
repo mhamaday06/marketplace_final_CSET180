@@ -28,16 +28,6 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.SmallInteger, nullable=False)  # 1 = customer, 2 = vendor, 3 = admin
 
-class CartItem(db.Model):
-    __tablename__ = 'cart_item'
-
-    cart_item_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=1)
-    added_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user = db.relationship('User', backref='cart_items')
-    product = db.relationship('Product', backref='cart_items')
 
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
@@ -329,15 +319,18 @@ def vendor_signup():
     return render_template('vendor_signup')
 
 
-
-
 @app.route('/product_creation')
 def product_creation():
     return render_template('product_creation.html')
 
+
 @app.route('/product_page')
 def product_page():
     return render_template('product_page.html')
+
+@app.route('/product_detail')
+def product_detail():
+    return render_template("product_detail.html")
 
 
 @app.route('/api/create_product', methods=['POST'])
@@ -439,10 +432,5 @@ def get_or_update_product(product_id):
         "discount_time": product.discount_time.isoformat() if product.discount_time else None
     }
     return jsonify(product_data)
-
-@app.route('/product')
-def specific_product(product_id):
-    return render_template('')
-
 if __name__ == '__main__':
         app.run(debug=True)
