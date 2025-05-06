@@ -6,6 +6,8 @@ import random
 import bcrypt
 import mysql.connector
 from datetime import datetime
+
+db = SQLAlchemy()
 conn_str = "mysql://root:cset155@localhost/ecommerce_application"
 engine = create_engine(conn_str, echo = True)
 conn = engine.connect()
@@ -26,6 +28,16 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.SmallInteger, nullable=False)  # 1 = customer, 2 = vendor, 3 = admin
 
+class CartItem(db.Model):
+    __tablename__ = 'cart_item'
+
+    cart_item_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref='cart_items')
+    product = db.relationship('Product', backref='cart_items')
 
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
@@ -90,6 +102,38 @@ class Chat(db.Model):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'user_type' in session and session['user_type'] == 3:  
+        vendors = User.query.filter_by(user_type=2, is_approved=False).all()
+        return render_template('admin_dashboard.html', users=vendors)
+    else:
+        return redirect('/login')
+
+@app.route('/approve_user/<int:user_id>', methods=['POST'])
+def approve_user(user_id):
+    user = User.query.get(user_id)
+    if user and user.user_type == 2:  
+        user.is_approved = True
+        db.session.commit()
+        flash("Vendor approved!", "success")
+    return redirect('/admin_dashboard')
+
+@app.route('/deny_user/<int:user_id>', methods=['POST'])
+def deny_user(user_id):
+    user = User.query.get(user_id)
+    if user and user.user_type == 2:  
+        db.session.delete(user)
+        db.session.commit()
+        flash("Vendor denied and deleted.", "success")
+    return redirect('/admin_dashboard')
+
+@app.route('/cart')
+def view_cart():
+    if 'username' not in session:
+        return redirect('/login')
+    return render_template('cart.html')
 
 @app.route('/api/cart', methods=['GET'])
 def cart():
@@ -208,11 +252,11 @@ def login():
 
             # Redirect based on user type
             if user.user_type == 1:
-                return redirect('/')  # customer homepage
+                return redirect('/')  
             elif user.user_type == 2:
-                return redirect('/vendor_dashboard')  # assume this exists
+                return redirect('/product_creation')  
             elif user.user_type == 3:
-                return redirect('/admin_dashboard')  # assume this exists
+                return redirect('/admin_dashboard')  
 
         error = "Invalid username or password"
         return render_template('login.html', error=error)
@@ -284,9 +328,7 @@ def signup():
 def vendor_signup():
     return render_template('vendor_signup')
 
-@app.route('/vendor_login')
-def vendor_login():
-    return render_template('vendor_login')
+
 
 
 @app.route('/product_creation')
