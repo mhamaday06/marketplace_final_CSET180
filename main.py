@@ -432,6 +432,5 @@ def get_or_update_product(product_id):
         "discount_time": product.discount_time.isoformat() if product.discount_time else None
     }
     return jsonify(product_data)
-
 if __name__ == '__main__':
         app.run(debug=True)
