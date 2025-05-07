@@ -98,10 +98,16 @@
     }
 
     #product-sizes {
-        display: flex;
+        display: none; /* This is changed to flex if there is sizes given to the product */
         flex-direction: row;
         gap: 7px;
         padding: 15px 0px;
+    }
+
+    .headings {
+        font-size: 20px;
+        padding-top: 10px;
+        font-weight: bold;
     }
 
     .sizes {
@@ -124,6 +130,30 @@
 
     .size-images {
         padding: 5px;
+    }
+
+    #product-colors {
+        display: none; /* This is changed to flex if there is sizes given to the product */
+        flex-direction: row;
+        gap: 7px;
+        padding: 15px 0px;
+    }
+
+    .color-box {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: border 0.2s ease;
+    }
+
+    .color-box:hover {
+        border: 2px solid white;
+    }
+
+    #description-heading {
+        padding: 0px 0px 10px 0px;
     }
 
     #product-description {
@@ -158,7 +188,9 @@
                 <div id="divider"></div>
                 <strong><p id="product-price"></p></strong>
                 <div id="product-sizes"></div>
+                <div id="product-colors"></div>
                 <div id="divider"></div>
+                <p class="headings" id="description-heading">Description: </p>
                 <p id="product-description"></p>
             </div>
         </div>
@@ -167,12 +199,15 @@
 <script>
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
+    let size_counter = 0
+    let color_counter = 0
 
     fetch(`/api/product/${id}`)
         .then(response => response.json())
         .then(product => {
             const imageUrls = product.images.split(',');
             const sizes = product.sizes.split(',').map(size => size.trim());
+            const colors = product.colors.split(",").map(color => color.trim())
 
             document.getElementById("product-name").textContent = product.name;
             document.getElementById("product-description").textContent = product.description;
@@ -182,30 +217,89 @@
             const sizesContainer = document.getElementById("product-sizes");
             sizesContainer.innerHTML = ""; // Clear any existing content
 
-            sizes.forEach(size => {
-                const div = document.createElement("div");
-                div.classList.add("sizes");
+            const product_container = document.getElementById("description-div")
 
-                const childDiv = document.createElement("div");
-                childDiv.classList.add("size-image-container");
+            const validSizes = sizes.filter(s => s.trim() !== "");
+            if (validSizes.length > 0) {
+                sizesContainer.style.display = "flex";
+                sizes.forEach(size => {
+                    if (size_counter == 0) {
+                        const size_p = document.createElement("p")
+                        size_p.innerText = "Sizes: "
+                        size_p.classList.add("headings")
 
-                const sizeImg = document.createElement("img");
-                sizeImg.classList.add("size-images")
-                sizeImg.src = imageUrls[0].trim(); // Use product image for each size
-                sizeImg.style.width = "100%";
-                sizeImg.style.height = "100%";
-                sizeImg.style.objectFit = "contain";
+                        const div = document.createElement("div");
+                        div.classList.add("sizes");
 
-                childDiv.appendChild(sizeImg);
-                div.appendChild(childDiv);
+                        const childDiv = document.createElement("div");
+                        childDiv.classList.add("size-image-container");
 
-                const p = document.createElement("p");
-                p.innerText = size;
-                p.style.textAlign = "center";
-                p.style.padding = "5px 0";
-                div.appendChild(p);
+                        const sizeImg = document.createElement("img");
+                        sizeImg.classList.add("size-images")
+                        sizeImg.src = imageUrls[0].trim();
+                        sizeImg.style.width = "100%";
+                        sizeImg.style.height = "100%";
+                        sizeImg.style.objectFit = "contain";
 
-                sizesContainer.appendChild(div);
+                        childDiv.appendChild(sizeImg);
+                        div.appendChild(childDiv);
+
+                        const p = document.createElement("p");
+                        p.innerText = size;
+                        p.style.textAlign = "center";
+                        p.style.padding = "5px 0";
+                        div.appendChild(p);
+
+                        product_container.insertBefore(size_p, sizesContainer);
+                        sizesContainer.appendChild(div);
+                        size_counter += 1
+                    } else {
+                        const div = document.createElement("div");
+                        div.classList.add("sizes");
+
+                        const childDiv = document.createElement("div");
+                        childDiv.classList.add("size-image-container");
+
+                        const sizeImg = document.createElement("img");
+                        sizeImg.classList.add("size-images")
+                        sizeImg.src = imageUrls[0].trim();
+                        sizeImg.style.width = "100%";
+                        sizeImg.style.height = "100%";
+                        sizeImg.style.objectFit = "contain";
+
+                        childDiv.appendChild(sizeImg);
+                        div.appendChild(childDiv);
+
+                        const p = document.createElement("p");
+                        p.innerText = size;
+                        p.style.textAlign = "center";
+                        p.style.padding = "5px 0";
+                        div.appendChild(p);
+
+                        sizesContainer.appendChild(div);
+                        product_container.style.display = "flex"
+                    }
+                });
+            }
+            
+
+            const colorsContainer = document.getElementById("product-colors");
+
+            colors.forEach((color, index) => {
+                if (color_counter === 0) {
+                    const label = document.createElement("p");
+                    label.innerText = "Colors:";
+                    label.classList.add("headings");
+                    product_container.insertBefore(label, colorsContainer);
+                    colorsContainer.style.display = "flex"; // Make container visible
+                    color_counter++;
+                }
+
+                const box = document.createElement("div");
+                box.classList.add("color-box");
+                box.style.backgroundColor = color;
+
+                colorsContainer.appendChild(box);
             });
         })
         .catch(err => {
