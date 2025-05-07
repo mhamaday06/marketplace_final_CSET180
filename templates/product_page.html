@@ -259,27 +259,38 @@
             renderProducts(allProducts); // render all products initially
         }
 
-        loadProducts(); // loads all products, which uses the renderProducts function to do so, which you can see below:
+        loadProducts(); // loads all products, which uses the renderProducts function to do so, as seen below:
 
-        function renderProducts(products) { // renders products on page
+        function renderProducts(products) {
             const container = document.getElementById("div-content");
             container.innerHTML = "";
 
-            products.forEach(product => {
+            products.forEach((product, index) => {
                 const div = document.createElement("div");
                 div.classList.add("product-card");
+
+                // Use first image as cover image
+                const imageUrls = product.images.split(",");
+                const firstImage = imageUrls[0].trim();
+
                 div.innerHTML = `
                     <h2>${product.name}</h2>
-                    <img class="images" id="first-image" src="${product.images}">
+                    <img class="images" src="${firstImage}">
                     <p><strong>Price:</strong> $${product.price}</p>
                     <p><strong>Description:</strong> ${product.description}</p>
                     <p><strong>Colors:</strong> ${product.colors}</p>
                     <p><strong>Sizes:</strong> ${product.sizes}</p>
                     <p><strong>Category:</strong> ${product.category}</p>
                     <p><strong>Vendor:</strong> ${product.vendor}</p>
-                    <button id="add-cart-btn">Add to Cart</button>
+                    <button id="view-product-btn-${index}">View Product</button>
                 `;
+
                 container.appendChild(div);
+
+                const viewBtn = div.querySelector(`#view-product-btn-${index}`);
+                viewBtn.addEventListener("click", () => {
+                    window.location.href = `/product_detail?id=${product.product_id}`;
+                });
             });
         }
 
@@ -329,6 +340,16 @@
             renderProducts(filteredProducts);
         });
 
+        function attachViewListeners() { // attaches listeners to view product btns
+            const view_btns_classes = document.getElementsByClassName('view-product-btn');
+            Array.from(view_btns_classes).forEach((btn, i) => {
+                const productId = allProducts[i].product_id;
+                btn.addEventListener("click", function () {
+                    console.log('event works!');
+                    // window.location.href = `/product_detail.html?id=${productId}`;
+                });
+            });
+        }
 
         search_btn.addEventListener("click", function() {
             const search_bar = search_bar_input.value.trim().toLowerCase(); // make value as easy to work with as possible
@@ -368,9 +389,10 @@
             scoredProducts.sort((a, b) => b.score - a.score); // the sort function here will ensure the element with the greatest score is at the top, as the items with the greatest score will pass the conditional given the most
             renderProducts(scoredProducts.map(p => p.product)); // this turns the scoredProducts array into raw data for the renderProducts function to work with (meaning a JSON object)
         });
+        attachViewListeners();
     })
     const cartBtn = document.getElementById("cart-btn");
-cartBtn.addEventListener("click", function() {
+    cartBtn.addEventListener("click", function() {
     window.location.href = "/cart";
 });
 </script>
