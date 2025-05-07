@@ -160,6 +160,28 @@
         font-size: 16px;
     }
 
+    #button-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* border: 1px green solid; */
+        margin-top: 15px;
+    }
+
+    button {
+        border: 1px transparent solid;
+        border-radius: 5px;
+        font-size: 20px;
+        background-color: red;
+        color: white;
+        padding: 15px 10px;
+    }
+
+    button:hover {
+        background-color: white;
+        color: black;
+        transition: 0.2s ease-in;
+    }
 
 </style>
 <body>
@@ -192,6 +214,9 @@
                 <div id="divider"></div>
                 <p class="headings" id="description-heading">Description: </p>
                 <p id="product-description"></p>
+                <div id="button-container">
+                    <button id="cart-btn">Add to Cart</button>
+                </div>
             </div>
         </div>
     </div>
