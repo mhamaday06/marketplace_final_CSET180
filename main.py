@@ -29,6 +29,7 @@ class User(db.Model):
     user_type = db.Column(db.SmallInteger, nullable=False)  # 1 = customer, 2 = vendor, 3 = admin
 
 
+
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
