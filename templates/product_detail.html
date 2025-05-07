@@ -7,39 +7,160 @@
 </head>
 <style>
 
-    #body-div {
-        border: 1px red solid;
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: black;
+        color: white;
+    }
+
+    nav {
         display: flex;
-        justify-content: space-around;
-        align-items: flex-start;
-        gap: 2rem;
+        justify-content: center;
+        align-items: center;
+        background-color: white;
+        margin-bottom: 20px;
+    }
+
+    nav ul {
+        list-style-type: none;
+        display: flex;
+        gap: 10px;
+        text-decoration: none;
+        padding: 20px;
+    }
+
+    nav ul li {
+        display: flex;
+        flex-direction: column;
+        font-size: 20px;
+    }
+
+    nav ul li a {
+        text-decoration: none;
+        color: black;
+    }
+
+    #body-div {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #product-div {
+        /* border: 1px red solid; */
+        display: flex;
+        justify-content: center;
+        height: 100%;
     }
 
     #image-div {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        border: 1px blue solid;
+        justify-content: flex-end; /* aligns the image to the right */
+        align-items: flex-start;   /* aligns it to the top */
+        height: 450px;
+        width: 450px;
+        /* border: 1px blue solid; */
+        padding-right: 20px;
+    }
+
+
+    #product-title-image {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        display: block;
     }
 
     #description-div {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        border: 1px green solid;
+        flex-direction: column;
+        /* border: 1px green solid; */
     }
+
+    #product-name {
+        font-size: 45px;
+    }
+
+    #divider {
+        width: 100%;
+        height: 2px;
+        background-color: white;
+        margin: 10px 0 20px 0;
+    }
+
+    #product-price {
+        font-size: 25px;
+    }
+
+    #product-sizes {
+        display: flex;
+        flex-direction: row;
+        gap: 7px;
+        padding: 15px 0px;
+    }
+
+    .sizes {
+        border: 1px grey solid;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sizes:hover {
+        border: 1px white solid;
+    }
+
+    .size-image-container {
+        display: flex;
+        justify-content: flex-end;
+        height: 70px;
+        width: 70px;
+        border-bottom: 1px grey solid;
+    }
+
+    .size-images {
+        padding: 5px;
+    }
+
+    #product-description {
+        font-size: 16px;
+    }
+
 
 </style>
 <body>
-    <div id="body-div">
-        <div id="image-div">
-            <img id="product-title-image" src="" alt="product-image">
-        </div>
+    <nav>
 
-        <div id="description-div">
-            <h1 id="product-name"></h1>
-            <p id="product-description"></p>
-            <p id="product-price"></p>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('staff_login') }}">Vendor Login</a></li>
+            <li><a href="{{ url_for('signup') }}">Signup</a></li>
+            <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
+            <li><a href="{{ url_for('product_page') }}">Product Page</a></li>
+            <li><a href="{{ url_for('accounts') }}">Accounts</a></li>
+        </ul>
+
+    </nav>
+
+    <div id="body-div">
+        <div id="product-div">
+            <div id="image-div">
+                <img id="product-title-image" src="" alt="product-image">
+            </div>
+    
+            <div id="description-div">
+                <h1 id="product-name"></h1>
+                <div id="divider"></div>
+                <strong><p id="product-price"></p></strong>
+                <div id="product-sizes"></div>
+                <div id="divider"></div>
+                <p id="product-description"></p>
+            </div>
         </div>
     </div>
 </body>
@@ -50,15 +171,46 @@
     fetch(`/api/product/${id}`)
         .then(response => response.json())
         .then(product => {
-            const imageUrls = product.images.split(',')
-            document.getElementById("product-name").textContent = product.name; // product title
-            document.getElementById("product-description").textContent = product.description; // product description
-            document.getElementById("product-price").textContent = `$${product.price}`; // product price
-            document.getElementById("product-title-image").src = imageUrls[0].trim(); // cover image, grabs first url
+            const imageUrls = product.images.split(',');
+            const sizes = product.sizes.split(',').map(size => size.trim());
+
+            document.getElementById("product-name").textContent = product.name;
+            document.getElementById("product-description").textContent = product.description;
+            document.getElementById("product-price").textContent = `$${product.price}`;
+            document.getElementById("product-title-image").src = imageUrls[0].trim();
+
+            const sizesContainer = document.getElementById("product-sizes");
+            sizesContainer.innerHTML = ""; // Clear any existing content
+
+            sizes.forEach(size => {
+                const div = document.createElement("div");
+                div.classList.add("sizes");
+
+                const childDiv = document.createElement("div");
+                childDiv.classList.add("size-image-container");
+
+                const sizeImg = document.createElement("img");
+                sizeImg.classList.add("size-images")
+                sizeImg.src = imageUrls[0].trim(); // Use product image for each size
+                sizeImg.style.width = "100%";
+                sizeImg.style.height = "100%";
+                sizeImg.style.objectFit = "contain";
+
+                childDiv.appendChild(sizeImg);
+                div.appendChild(childDiv);
+
+                const p = document.createElement("p");
+                p.innerText = size;
+                p.style.textAlign = "center";
+                p.style.padding = "5px 0";
+                div.appendChild(p);
+
+                sizesContainer.appendChild(div);
+            });
         })
         .catch(err => {
             console.error("Failed to load product:", err);
         });
-
 </script>
+
 </html>
