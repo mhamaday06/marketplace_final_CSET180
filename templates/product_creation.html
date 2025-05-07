@@ -128,6 +128,18 @@
         gap: 15px;
     }
 
+    #product-description-input {
+        height: 120px;
+        width: 340px;
+        font-size: 20px;
+        padding: 15px 10px;
+        border: 1px transparent solid;
+        border-radius: 5px;
+        resize: none;
+        font-family: Arial;
+    }
+
+
     #apply-btn {
         display: none;
     }
@@ -158,7 +170,7 @@
         <div class="div-content" id="div-content">
             <input type="text" name="vendor-name" id="vendor-input" placeholder="Vendor's Name">
             <input type="text" name="product-title" id="product-title-input" placeholder="Product Title">
-            <input type="text" name="product-description" id="product-description-input" placeholder="Product Description">
+            <textarea name="product-description" id="product-description-input" placeholder="Product Description"></textarea>
             <div id="div-image-content">
                 <input type="text" name="product-images" id="product-image-1-input" class="image-url-inputs" placeholder="url to image">
             </div>
