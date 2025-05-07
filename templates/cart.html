@@ -97,6 +97,72 @@ nav ul li a {
     <br>
 </body>
 <script>
-    
+    document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/cart')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Not authorized or unable to fetch cart data.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const itemsContainer = document.getElementById('itemsincart');
+            const totalElement = document.querySelector('.cart-total-price');
+            let total = 0;
+
+            data.cart.forEach(item => {
+                const itemRow = document.createElement('div');
+                itemRow.classList.add('cart-row');
+
+                const nameCol = document.createElement('span');
+                nameCol.classList.add('cart-item', 'cart-column');
+                nameCol.innerText = item.name;
+
+                const priceCol = document.createElement('span');
+                priceCol.classList.add('cart-price', 'cart-column');
+                priceCol.innerText = `$${item.price.toFixed(2)}`;
+
+                const quantityCol = document.createElement('span');
+                quantityCol.classList.add('cart-quantity', 'cart-column');
+                quantityCol.innerText = item.quantity;
+
+                itemRow.appendChild(nameCol);
+                itemRow.appendChild(priceCol);
+                itemRow.appendChild(quantityCol);
+
+                itemsContainer.appendChild(itemRow);
+
+                total += item.price * item.quantity;
+            });
+
+            totalElement.innerText = `$${total.toFixed(2)}`;
+        })
+        .catch(error => {
+            console.error('Error loading cart:', error);
+        });
+});
+
+function returnHome() {
+    window.location.href = "/";
+}
+
+function clearCart() {
+    fetch('/api/checkout', {
+        method: 'POST'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Checkout failed');
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message);
+    })
+    .catch(error => {
+        console.error(error);
+        alert("There was an error during checkout.");
+    });
+}
 </script>
 </html>
