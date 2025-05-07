@@ -28,16 +28,16 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.SmallInteger, nullable=False)  # 1 = customer, 2 = vendor, 3 = admin
 
-class CartItem(db.Model):
-    __tablename__ = 'cart_item'
+# class CartItem(db.Model):
+#     __tablename__ = 'cart_item'
 
-    cart_item_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=1)
-    added_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user = db.relationship('User', backref='cart_items')
-    product = db.relationship('Product', backref='cart_items')
+#     cart_item_id = db.Column(db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+#     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+#     quantity = db.Column(db.Integer, nullable=False, default=1)
+#     added_at = db.Column(db.DateTime, default=datetime.utcnow)
+#     user = db.relationship('User', backref='cart_items')
+#     product = db.relationship('Product', backref='cart_items')
 
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
