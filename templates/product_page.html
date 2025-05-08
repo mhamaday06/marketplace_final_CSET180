@@ -154,8 +154,13 @@
         padding: 0px 5px 5px 5px;
     }
 
+    .prices {
+        margin-top: 10px;
+    }
+
     .product-card img {
         margin: 0 auto;
+        max-height: 200px;
     }
 
     .product-card strong {
@@ -276,7 +281,7 @@
                 div.innerHTML = `
                     <h2>${product.name}</h2>
                     <img class="images" src="${firstImage}">
-                    <p><strong>Price:</strong> $${product.price}</p>
+                    <p class="prices"><strong>Price:</strong> $${product.price}</p>
                     <p><strong>Description:</strong> ${product.description}</p>
                     <p><strong>Colors:</strong> ${product.colors}</p>
                     <p><strong>Sizes:</strong> ${product.sizes}</p>
