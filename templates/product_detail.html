@@ -227,6 +227,37 @@
     let size_counter = 0
     let color_counter = 0
 
+    document.getElementById("cart-btn").addEventListener("click", () => {
+    fetch(`/api/product/${id}`)
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to get product data.");
+            return response.json();
+        })
+        .then(product => {
+            return fetch('/api/add_to_cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_id: product.product_id,
+                    quantity: 1  // default to 1; adjust as needed
+                })
+            });
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to add to cart.");
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message || "Product added to cart!");
+        })
+        .catch(err => {
+            console.error("Error adding to cart:", err);
+            alert("Failed to add to cart.");
+        });
+});
+
     fetch(`/api/product/${id}`)
         .then(response => response.json())
         .then(product => {

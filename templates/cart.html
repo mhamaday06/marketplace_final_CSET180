@@ -141,6 +141,29 @@ nav ul li a {
             console.error('Error loading cart:', error);
         });
 });
+function removeItemFromCart(productName) {
+    fetch('/api/products')
+        .then(response => response.json())
+        .then(products => {
+            const product = products.find(p => p.name === productName);
+            if (!product) return alert('Product not found.');
+
+            return fetch('/api/remove_from_cart', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ product_id: product.product_id })
+            });
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to remove item');
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            loadCartItems();  // Refresh cart
+        })
+        .catch(error => console.error(error));
+}
 
 function returnHome() {
     window.location.href = "/";
