@@ -383,6 +383,7 @@ def get_products():
             "description": product.description,
             "warranty_period": product.warranty_period,
             "category": product.category,
+            "vendor": product.vendor,
             "images": product.images,
             "colors": product.colors,
             "sizes": product.sizes,
