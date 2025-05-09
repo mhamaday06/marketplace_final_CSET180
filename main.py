@@ -5,7 +5,7 @@ from enum import IntEnum
 import random
 import bcrypt
 import mysql.connector
-from datetime import datetime
+from datetime import datetime, timezone
 
 db = SQLAlchemy()
 conn_str = "mysql://root:cset155@localhost/ecommerce_application"
@@ -90,6 +90,22 @@ class Chat(db.Model):
     images = db.Column(db.String(255))
     return_id = db.Column(db.Integer, db.ForeignKey('pending_return.return_id'))
 
+class Receipt(db.Model):
+    __tablename__ = 'receipt'
+
+    receipt_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    product_title = db.Column(db.String(50), nullable=False)
+    quantity_item = db.Column(db.Integer, nullable=False)
+    date_purchased = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    total_price = db.Column(db.Numeric(10, 2), nullable=False)
+
+    # Optional: relationships if you have User and Product models
+    user = db.relationship('User', backref='receipts')
+    product = db.relationship('Product', backref='receipts')
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -126,10 +142,10 @@ def view_cart():
         return redirect('/login')
     return render_template('cart.html')
 
-@app.route('/api/cart', methods=['GET'])
+@app.route("/api/cart")
 def cart():
     if 'username' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
+        return jsonify({'error': 'Unauthorized'}), 401
 
     user = User.query.filter_by(username=session['username']).first()
     cart_items = CartItem.query.filter_by(user_id=user.user_id).all()
@@ -138,12 +154,15 @@ def cart():
     for item in cart_items:
         product = Product.query.get(item.product_id)
         result.append({
+            "product_id": product.product_id,
             "name": product.name,
             "price": product.price,
             "quantity": item.quantity
         })
 
     return jsonify({"cart": result})
+
+
 
 @app.route('/api/add_to_cart', methods=['POST'])
 def add_to_cart():
@@ -373,6 +392,19 @@ def create_product():
 
     return jsonify({"message": "Product Created Successfully", "product": product.name})
 
+@app.route('/api/complete_order', methods=['POST'])
+def complete_order():
+    data = request.json  # should contain items, user info, etc.
+
+    # Save to database (e.g., create a Receipt record)
+    # Example:
+    # for item in data['cart']:
+    #     new_receipt = Receipt(user_id=data['user_id'], product_id=item['product_id'], quantity=item['quantity'], ...)
+    #     db.session.add(new_receipt)
+
+    db.session.commit()
+    return jsonify({"message": "Order saved to receipts!"})
+
 @app.route('/api/get_products', methods=['GET'])
 def get_products():
     products = Product.query.all()
@@ -434,5 +466,25 @@ def get_or_update_product(product_id):
         "discount_time": product.discount_time.isoformat() if product.discount_time else None
     }
     return jsonify(product_data)
+@app.route('/api/receipt', methods=['POST'])
+def export_cart():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    cart_items = data.get("cart", [])
+    total_cost = data.get("total_cost")
+
+    for item in cart_items:
+        new_receipt = Receipt(
+            user_id=user_id,
+            product_id=item.get("product_id"),  # Optional, if you add this
+            product_title=item.get("product_title"),
+            quantity_item=item.get("quantity")
+        )
+        db.session.add(new_receipt)
+
+    db.session.commit()
+
+    return jsonify({"message": f"{len(cart_items)} item(s) saved to receipt."})
+
 if __name__ == '__main__':
         app.run(debug=True)
