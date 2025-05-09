@@ -367,7 +367,7 @@ def staff_login():
                 session['user_type'] = user.user_type
 
                 if user.user_type == 2:
-                    return redirect('/vendor_dashboard')
+                    return redirect('/product_creation')
                 else:
                     return redirect('/admin_dashboard')
             else:
