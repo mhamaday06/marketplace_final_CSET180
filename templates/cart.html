@@ -108,6 +108,7 @@ button {
     // quantityCol.classList.add('cart-quantity', 'cart-column');
     // quantityCol.innerText = `Quantity: ${item.quantity}`;
     document.addEventListener('DOMContentLoaded', () => {
+        const userId = JSON.parse('{{ user_id | tojson | safe }}');
         const purchase_btn = document.getElementById("purchase-btn")
         let data_info = 0
     fetch('/api/cart')
@@ -176,7 +177,7 @@ button {
                         product_title: name,
                         price: price,
                         quantity: quantity,
-                        product_id: matchingItem.product_id  // use real product ID
+                        product_id: matchingItem.product_id
                     });
 
 
@@ -185,12 +186,12 @@ button {
             });
 
             const receiptPayload = {
-                user_id: 1,  // Replace with actual user session ID
+                user_id: userId,
                 cart: cartItems,
                 total_price: totalCost.toFixed(2)
             };
 
-            fetch('/api/receipt', {
+            fetch('/api/receipt', { // send to receipt 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(receiptPayload)
@@ -206,7 +207,24 @@ button {
             .catch(error => {
                 console.error("Error sending receipt:", error);
             });
+
+            fetch('/api/sent_order', { // then send to orders
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(receiptPayload)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to submitting order to orders table.");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Order submitted to vendor:", data.message);
+            })
+            .catch(error => {
+                console.error("Error sending order to orders table:", error);
+            });
         });
+
 });
 function removeItemFromCart(productName) {
     fetch('/api/products')
@@ -234,25 +252,6 @@ function removeItemFromCart(productName) {
 
 function returnHome() {
     window.location.href = "/";
-}
-
-function clearCart() {
-    fetch('/api/checkout', {
-        method: 'POST'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Checkout failed');
-        }
-        return response.json();
-    })
-    .then(data => {
-        alert(data.message);
-    })
-    .catch(error => {
-        console.error(error);
-        alert("There was an error during checkout.");
-    });
 }
 </script>
 </html>
