@@ -77,38 +77,70 @@
 </body>
 <script>
 document.getElementById('signup-form').addEventListener('submit', async function (e) {
+    const user_type = document.getElementById("user_type")
     e.preventDefault();
 
     const form = e.target;
     const formData = new FormData(form);
 
-    const data = {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        username: formData.get('username'),
-        password: formData.get('password'),
-        user_type: 1 
-    };
+    if (user_type.value === "1") {
+        const data = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            username: formData.get('username'),
+            password: formData.get('password'),
+            user_type: 1 
+        };
 
-    try {
-        const response = await fetch(form.action, {
-            method: 'POST',
-            headers: {
-                'Accept': 'text/html',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams(data)
-        });
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'text/html',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(data)
+            });
 
-        if (response.redirected) {
-            window.location.href = response.url;
-        } else {
-            const text = await response.text();
-            document.body.innerHTML = text;
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                const text = await response.text();
+                document.body.innerHTML = text;
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            alert('An error occurred while signing up.');
         }
-    } catch (error) {
-        console.error('Signup error:', error);
-        alert('An error occurred while signing up.');
+    } else if (user_type.value === "2") {
+        const data = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            username: formData.get('username'),
+            password: formData.get('password'),
+            user_type: 2
+        };
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'text/html',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(data)
+            });
+
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                const text = await response.text();
+                document.body.innerHTML = text;
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            alert('An error occurred while signing up.');
+        }
     }
 });
 </script>
