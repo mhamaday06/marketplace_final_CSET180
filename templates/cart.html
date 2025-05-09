@@ -291,8 +291,6 @@ button {
     function clearCart() {
         fetch('/api/checkout', {
             method: 'POST'
-
-});
         })
         .then(response => {
             if (!response.ok) {
@@ -308,7 +306,6 @@ button {
             alert("There was an error during checkout.");
         });
     }
-
 function returnHome() {
     window.location.href = "/";
 }
