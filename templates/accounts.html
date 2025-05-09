@@ -54,27 +54,34 @@
             <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
             <li><a href=" {{ url_for('product_page') }} ">Product Page</a></li>
             <li><a href="{{ url_for('accounts') }}"></a>Accounts</li>
+            {% if session.get('user_type') == 3 %}
+    <li><a href="{{ url_for('admin_returns') }}">Manage Returns</a></li>
+{% endif %}
         </ul>
     </nav>
-    <div class="div-body">
-        <div class="div-body-content">
-            <h1>Accounts</h1>
-            {% block body %}
-            <select id="filter-select">
-                <option value="vendor"{% if selected_type == 'Vendor' %}selected{% endif %}>Vendor</option>
-                <option value="admin"{% if selected_type == 'Admin' %}selected{% endif %}>Admin</option>
-            </select>
-            <div id="account-list">
-                <h2>{{ selected_type }} Accounts</h2>
-                <ul>
-                    {% for user in users %}
-                        <li>{{ user.name }} ({{ user.username }}) - {{ user.email }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
+
+
+{% if user and user.user_type == 1 %}
+    <h2>Your Purchase History</h2>
+    {% for order in orders %}
+        <div style="border: 1px solid white; padding: 10px; margin: 10px;">
+            <strong>Order #{{ order.order_id }}</strong><br>
+            Items: {{ order.items }}<br>
+            Date: {{ order.date }}<br>
+            Status: {{ order.order_status }}<br>
+
+            <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
+                <label>Reason for Return:</label><br>
+                <textarea name="reason" required></textarea><br>
+
+                <label>What do you want? (Refund, Exchange, etc.):</label><br>
+                <input type="text" name="demand" required><br>
+
+                <button type="submit">Request Return</button>
+            </form>
         </div>
-    </div>
-{% endblock %}
+    {% endfor %}
+{% endif %}
 </body>
 <script>
     function filterAccounts() {

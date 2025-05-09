@@ -97,6 +97,9 @@ nav ul li a {
     <br>
 </body>
 <script>
+    // const quantityCol = document.createElement('span');
+    // quantityCol.classList.add('cart-quantity', 'cart-column');
+    // quantityCol.innerText = `Quantity: ${item.quantity}`;
     document.addEventListener('DOMContentLoaded', () => {
     fetch('/api/cart')
         .then(response => {

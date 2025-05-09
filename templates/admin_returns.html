@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('staff_login') }}">Vendor Login</a></li>
+            <li><a href="{{ url_for('signup') }}">Signup</a></li>
+            <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
+            <li><a href="{{ url_for('product_page') }}">Product Page</a></li>
+            <li><a href="{{ url_for('accounts') }}">Accounts</a></li>
+        </ul>
+    </nav>
+    <h1>Pending Return Requests</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% for ret in returns %}
+        <div style="border: 1px solid black; padding: 10px; margin: 10px;">
+            <strong>{{ ret.title }}</strong><br>
+            <p>{{ ret.description }}</p>
+            <p>Demand: {{ ret.demand_specification }}</p>
+            <p>Status: <strong>{{ ret.status }}</strong></p>
+            <p>Date: {{ ret.date }}</p>
+            {% if ret.images %}
+                <img src="{{ ret.images }}" width="100" alt="Return image"><br>
+            {% endif %}
+            
+            {% if ret.status == 'pending' %}
+                <form method="POST" action="{{ url_for('approve_return', return_id=ret.return_id) }}" style="display:inline;">
+                    <button type="submit">Approve</button>
+                </form>
+                <form method="POST" action="{{ url_for('deny_return', return_id=ret.return_id) }}" style="display:inline;">
+                    <button type="submit">Deny</button>
+                </form>
+            {% endif %}
+        </div>
+    {% endfor %}
+</body>
+</html>
