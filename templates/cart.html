@@ -104,92 +104,103 @@ button {
     <br>
 </body>
 <script>
-    // const quantityCol = document.createElement('span');
-    // quantityCol.classList.add('cart-quantity', 'cart-column');
-    // quantityCol.innerText = `Quantity: ${item.quantity}`;
     document.addEventListener('DOMContentLoaded', () => {
         const purchase_btn = document.getElementById("purchase-btn")
         let data_info = 0
-    fetch('/api/cart')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Not authorized or unable to fetch cart data.');
-            }
-            return response.json();
-        })
-        .then(data => {
-            const itemsContainer = document.getElementById('itemsincart');
-            const totalElement = document.querySelector('.cart-total-price');
-            let total = 0;
-            data_info = data // gets data in global scope
-
-            data.cart.forEach(item => {
-                
-                const itemRow = document.createElement('div');
-                itemRow.classList.add('cart-row');
-
-                const nameCol = document.createElement('span');
-                nameCol.classList.add('cart-item', 'cart-column');
-                nameCol.innerText = item.name;
-
-                const priceCol = document.createElement('span');
-                priceCol.classList.add('cart-price', 'cart-column');
-                priceCol.innerText = `$${item.price.toFixed(2)}`;
-
-                const quantityCol = document.createElement('span');
-                quantityCol.classList.add('cart-quantity', 'cart-column');
-                quantityCol.innerText = item.quantity;
-
-                itemRow.appendChild(nameCol);
-                itemRow.appendChild(priceCol);
-                itemRow.appendChild(quantityCol);
-
-                itemsContainer.appendChild(itemRow);
-
-                total += item.price * item.quantity;
+    
+        fetch('/api/cart')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Not authorized or unable to fetch cart data.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const itemsContainer = document.getElementById('itemsincart');
+                const totalElement = document.querySelector('.cart-total-price');
+                let total = 0;
+                data_info = data;
+    
+                data.cart.forEach(item => {
+                    const itemRow = document.createElement('div');
+                    itemRow.classList.add('cart-row');
+    
+                    const nameCol = document.createElement('span');
+                    nameCol.classList.add('cart-item', 'cart-column');
+                    nameCol.innerText = item.name;
+    
+                    const priceCol = document.createElement('span');
+                    priceCol.classList.add('cart-price', 'cart-column');
+                    priceCol.innerText = `$${item.price.toFixed(2)}`;
+    
+                    const quantityCol = document.createElement('span');
+                    quantityCol.classList.add('cart-quantity', 'cart-column');
+    
+                    const minusBtn = document.createElement('button');
+                    minusBtn.innerText = '−';
+                    minusBtn.onclick = () => updateQuantity(item, -1);
+    
+                    const qtyDisplay = document.createElement('span');
+                    qtyDisplay.innerText = item.quantity;
+                    qtyDisplay.classList.add('qty-display');
+    
+                    const plusBtn = document.createElement('button');
+                    plusBtn.innerText = '+';
+                    plusBtn.onclick = () => updateQuantity(item, 1);
+    
+                    quantityCol.appendChild(minusBtn);
+                    quantityCol.appendChild(qtyDisplay);
+                    quantityCol.appendChild(plusBtn);
+    
+                    itemRow.appendChild(nameCol);
+                    itemRow.appendChild(priceCol);
+                    itemRow.appendChild(quantityCol);
+    
+                    itemsContainer.appendChild(itemRow);
+    
+                    total += item.price * item.quantity;
+                });
+    
+                totalElement.innerText = `$${total.toFixed(2)}`;
+            })
+            .catch(error => {
+                console.error('Error loading cart:', error);
             });
-
-            totalElement.innerText = `$${total.toFixed(2)}`;
-        })
-        .catch(error => {
-            console.error('Error loading cart:', error);
-        });
-
+    
         purchase_btn.addEventListener("click", function () {
             const rows = document.querySelectorAll('.cart-row');
             const cartItems = [];
             let totalCost = 0;
-
+    
             rows.forEach(row => {
                 const name = row.querySelector('.cart-item')?.innerText;
                 const priceText = row.querySelector('.cart-price')?.innerText;
-                const quantityText = row.querySelector('.cart-quantity')?.innerText;
-
+                const quantityText = row.querySelector('.qty-display')?.innerText;
+    
                 if (name && priceText && quantityText) {
                     const price = parseFloat(priceText.replace('$', '').trim());
                     const quantity = parseInt(quantityText.trim());
-
-                    const matchingItem = data_info.cart.find(i => i.name === name); // match cart item by name
+    
+                    const matchingItem = data_info.cart.find(i => i.name === name);
                     if (!matchingItem) return;
-
+    
                     cartItems.push({
                         product_title: name,
                         price: price,
                         quantity: quantity,
-                        product_id: matchingItem.product_id  // use real product ID
+                        product_id: matchingItem.product_id
                     });
-
-
+    
                     totalCost += price * quantity;
                 }
             });
-
+    
             const receiptPayload = {
                 user_id: 1,  // Replace with actual user session ID
                 cart: cartItems,
                 total_cost: totalCost.toFixed(2)
             };
-
+    
             fetch('/api/receipt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -201,58 +212,79 @@ button {
             })
             .then(data => {
                 console.log("Receipt recorded:", data.message);
-                // Clear cart here if needed
             })
             .catch(error => {
                 console.error("Error sending receipt:", error);
             });
         });
-});
-function removeItemFromCart(productName) {
-    fetch('/api/products')
-        .then(response => response.json())
-        .then(products => {
-            const product = products.find(p => p.name === productName);
-            if (!product) return alert('Product not found.');
-
-            return fetch('/api/remove_from_cart', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ product_id: product.product_id })
-            });
+    });
+    
+    function updateQuantity(item, delta) {
+        const rows = document.querySelectorAll('.cart-row');
+        rows.forEach(row => {
+            const name = row.querySelector('.cart-item')?.innerText;
+            if (name === item.name) {
+                const qtySpan = row.querySelector('.qty-display');
+                let quantity = parseInt(qtySpan.innerText);
+                quantity = Math.max(1, quantity + delta); // avoid going below 1
+                qtySpan.innerText = quantity;
+    
+                const totalElement = document.querySelector('.cart-total-price');
+                const newTotal = Array.from(document.querySelectorAll('.cart-row')).reduce((acc, r) => {
+                    const qty = parseInt(r.querySelector('.qty-display')?.innerText || "0");
+                    const pr = parseFloat(r.querySelector('.cart-price')?.innerText.replace('$', '') || "0");
+                    return acc + qty * pr;
+                }, 0);
+                totalElement.innerText = `$${newTotal.toFixed(2)}`;
+            }
+        });
+    }
+    
+    function removeItemFromCart(productName) {
+        fetch('/api/products')
+            .then(response => response.json())
+            .then(products => {
+                const product = products.find(p => p.name === productName);
+                if (!product) return alert('Product not found.');
+    
+                return fetch('/api/remove_from_cart', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ product_id: product.product_id })
+                });
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to remove item');
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message);
+                loadCartItems();
+            })
+            .catch(error => console.error(error));
+    }
+    
+    function returnHome() {
+        window.location.href = "/";
+    }
+    
+    function clearCart() {
+        fetch('/api/checkout', {
+            method: 'POST'
         })
         .then(response => {
-            if (!response.ok) throw new Error('Failed to remove item');
+            if (!response.ok) {
+                throw new Error('Checkout failed');
+            }
             return response.json();
         })
         .then(data => {
             alert(data.message);
-            loadCartItems();  // Refresh cart
         })
-        .catch(error => console.error(error));
-}
-
-function returnHome() {
-    window.location.href = "/";
-}
-
-function clearCart() {
-    fetch('/api/checkout', {
-        method: 'POST'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Checkout failed');
-        }
-        return response.json();
-    })
-    .then(data => {
-        alert(data.message);
-    })
-    .catch(error => {
-        console.error(error);
-        alert("There was an error during checkout.");
-    });
-}
-</script>
+        .catch(error => {
+            console.error(error);
+            alert("There was an error during checkout.");
+        });
+    }
+    </script>
 </html>
