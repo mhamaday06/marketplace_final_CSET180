@@ -1,11 +1,18 @@
 from flask import Flask, render_template, request, jsonify, flash, redirect, session, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, create_engine, text, Float
-from enum import IntEnum
+from enum import IntEnum, Enum
 import random
 import bcrypt
 import mysql.connector
 from datetime import datetime, timezone
+from sqlalchemy.types import Enum as SQLAlchemyEnum
+
+class OrderStatus(Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    SHIPPED = "shipped"
+    DELIVERED = "delivered"
 
 db = SQLAlchemy()
 conn_str = "mysql://root:cset155@localhost/ecommerce_application"
@@ -28,12 +35,11 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.SmallInteger, nullable=False)  # 1 = customer, 2 = vendor, 3 = admin
 
-
-
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     vendor = db.Column(db.String(50), nullable=False)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     description = db.Column(db.Text, nullable=False)
     warranty_period = db.Column(db.String(20))
     category = db.Column(db.String(50))
@@ -46,14 +52,15 @@ class Product(db.Model):
     discount_time = db.Column(db.DateTime)
 
 
-class UnconfirmedOrder(db.Model):
+class Orders(db.Model):
+    __tablename__ = 'orders'
+
     order_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     vendor_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
-    items = db.Column(db.String(255), nullable=False)
-    price = db.Column(db.Integer, nullable=False)
-    order_status = db.Column(db.String(15), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    status = db.Column(SQLAlchemyEnum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
+    total_price = db.Column(db.Float, nullable=False)
 
 
 class CartItem(db.Model):
@@ -140,7 +147,10 @@ def deny_user(user_id):
 def view_cart():
     if 'username' not in session:
         return redirect('/login')
-    return render_template('cart.html')
+
+    user = User.query.filter_by(username=session['username']).first()
+    return render_template('cart.html', user_id=user.user_id)
+
 
 @app.route("/api/cart")
 def cart():
@@ -203,34 +213,34 @@ def remove_from_cart():
     else:
         return jsonify({'error': 'Item not found in cart'}), 404
     
-@app.route('/api/checkout', methods=['POST'])
-def checkout():
-    if 'username' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+# @app.route('/api/checkout', methods=['POST'])
+# def checkout():
+#     if 'username' not in session:
+#         return jsonify({'error': 'Unauthorized'}), 401
 
-    user = User.query.filter_by(username=session['username']).first()
-    cart_items = CartItem.query.filter_by(user_id=user.user_id).all()
+#     user = User.query.filter_by(username=session['username']).first()
+#     cart_items = CartItem.query.filter_by(user_id=user.user_id).all()
 
-    if not cart_items:
-        return jsonify({'error': 'Cart is empty'}), 400
+#     if not cart_items:
+#         return jsonify({'error': 'Cart is empty'}), 400
 
-    total_price = 0
-    order_items = []
+#     total_price = 0
+#     order_items = []
 
-    for item in cart_items:
-        product = Product.query.get(item.product_id)
-        total_price += product.price * item.quantity
-        order_items.append(f"{product.name} x{item.quantity}")
+#     for item in cart_items:
+#         product = Product.query.get(item.product_id)
+#         total_price += product.price * item.quantity
+#         order_items.append(f"{product.name} x{item.quantity}")
 
-    new_order = UnconfirmedOrder(
-        user_id=user.user_id,
-        vendor_id=1,  
-        date=datetime.now(),
-        items=", ".join(order_items),
-        price=total_price,
-        order_status="pending"
-    )
-    db.session.add(new_order)
+#     new_order = Orders(
+#         user_id=user.user_id,
+#         vendor_id=1,  
+#         date=datetime.now(),
+#         items=", ".join(order_items),
+#         price=total_price,
+#         order_status="pending"
+#     )
+#     db.session.add(new_order)
 
     
     for item in cart_items:
@@ -574,20 +584,53 @@ def export_cart():
     data = request.get_json()
     user_id = data.get("user_id")
     cart_items = data.get("cart", [])
-    total_cost = data.get("total_cost")
 
     for item in cart_items:
+        item_total = float(item.get("price", 0)) * int(item.get("quantity", 1))
         new_receipt = Receipt(
             user_id=user_id,
-            product_id=item.get("product_id"),  # Optional, if you add this
+            product_id=item.get("product_id"),
             product_title=item.get("product_title"),
-            quantity_item=item.get("quantity")
+            quantity_item=item.get("quantity"),
+            total_price=item_total
         )
         db.session.add(new_receipt)
 
     db.session.commit()
 
     return jsonify({"message": f"{len(cart_items)} item(s) saved to receipt."})
+@app.route('/api/sent_order', methods=['POST'])
+def send_order():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    cart_items = data.get("cart", [])
+    order_status = OrderStatus.PENDING
+
+    for item in cart_items:
+        item_total = float(item.get("price", 0)) * int(item.get("quantity", 1))
+
+        product_id = item.get("product_id")
+        product = Product.query.get(product_id)
+        vendor_name = product.vendor
+        vendor_user = User.query.filter_by(username=vendor_name).first()
+        vendor_id = vendor_user.user_id
+        order = Orders(
+            user_id=user_id,
+            vendor_id=vendor_id,
+            product_id=product_id,
+            total_price=item_total,
+            status=order_status
+        )
+        db.session.add(order)
+
+    db.session.commit()
+    return jsonify({"message": f"{len(cart_items)} item(s) sent to orders waiting to be confirmed by vendor."})
+    # order_id = db.Column(db.Integer, primary_key=True)
+    # user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    # vendor_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    # created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    # status = db.Column(SQLAlchemyEnum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
+    # total_price = db.Column(db.Float, nullable=False)        
 
 if __name__ == '__main__':
         app.run(debug=True)

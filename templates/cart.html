@@ -105,6 +105,7 @@ button {
 </body>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        const userId = JSON.parse('{{ user_id | tojson | safe }}');
         const purchase_btn = document.getElementById("purchase-btn")
         let data_info = 0
     
@@ -196,12 +197,15 @@ button {
             });
     
             const receiptPayload = {
-                user_id: 1,  // Replace with actual user session ID
+                user_id: userId,
                 cart: cartItems,
-                total_cost: totalCost.toFixed(2)
+                total_price: totalCost.toFixed(2)
             };
-    
-            fetch('/api/receipt', {
+
+
+
+            fetch('/api/receipt', { // send to receipt 
+
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(receiptPayload)
@@ -215,6 +219,22 @@ button {
             })
             .catch(error => {
                 console.error("Error sending receipt:", error);
+            });
+
+            fetch('/api/sent_order', { // then send to orders
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(receiptPayload)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to submitting order to orders table.");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Order submitted to vendor:", data.message);
+            })
+            .catch(error => {
+                console.error("Error sending order to orders table:", error);
             });
         });
     });
@@ -271,6 +291,8 @@ button {
     function clearCart() {
         fetch('/api/checkout', {
             method: 'POST'
+
+});
         })
         .then(response => {
             if (!response.ok) {
@@ -286,5 +308,9 @@ button {
             alert("There was an error during checkout.");
         });
     }
-    </script>
+
+function returnHome() {
+    window.location.href = "/";
+}
+</script>
 </html>
