@@ -432,10 +432,12 @@ def product_detail():
 
 @app.route('/api/create_product', methods=['POST'])
 def create_product():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
 
     name = data.get("product_title")
-    vendor = data.get("vendor")
     images = data.get("product_images")
     description = data.get("product_description")
     warranty_period = data.get("product_warranty")
@@ -444,16 +446,16 @@ def create_product():
     inventory_space = data.get("inventory_size")
     sizes = data.get("sizes")
     price = data.get("price")
-    
-    # Default values for now — update these if you want full support later
+
     discount_price = None
     discount_time = None
 
     product = Product(
         name=name,
+        vendor=session['username'],
+        vendor_id=session['user_id'], 
         images=images,
         description=description,
-        vendor=vendor,
         warranty_period=warranty_period,
         category=product_category,
         colors=colors,
@@ -468,6 +470,7 @@ def create_product():
     db.session.commit()
 
     return jsonify({"message": "Product Created Successfully", "product": product.name})
+
 
 @app.route('/api/complete_order', methods=['POST'])
 def complete_order():
