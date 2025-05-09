@@ -212,42 +212,6 @@ def remove_from_cart():
         return jsonify({'message': 'Item removed'})
     else:
         return jsonify({'error': 'Item not found in cart'}), 404
-    
-# @app.route('/api/checkout', methods=['POST'])
-# def checkout():
-#     if 'username' not in session:
-#         return jsonify({'error': 'Unauthorized'}), 401
-
-#     user = User.query.filter_by(username=session['username']).first()
-#     cart_items = CartItem.query.filter_by(user_id=user.user_id).all()
-
-#     if not cart_items:
-#         return jsonify({'error': 'Cart is empty'}), 400
-
-#     total_price = 0
-#     order_items = []
-
-#     for item in cart_items:
-#         product = Product.query.get(item.product_id)
-#         total_price += product.price * item.quantity
-#         order_items.append(f"{product.name} x{item.quantity}")
-
-#     new_order = Orders(
-#         user_id=user.user_id,
-#         vendor_id=1,  
-#         date=datetime.now(),
-#         items=", ".join(order_items),
-#         price=total_price,
-#         order_status="pending"
-#     )
-#     db.session.add(new_order)
-
-    
-    for item in cart_items:
-        db.session.delete(item)
-
-    db.session.commit()
-    return jsonify({'message': 'Checkout complete. Thank you for your purchase!'})
 
 @app.route('/request_return/<int:order_id>', methods=['POST'])
 def request_return(order_id):
@@ -255,7 +219,7 @@ def request_return(order_id):
         return redirect('/login')
 
     user = User.query.filter_by(username=session['username']).first()
-    order = UnconfirmedOrder.query.filter_by(order_id=order_id, user_id=user.user_id).first()
+    order = Orders.query.filter_by(order_id=order_id, user_id=user.user_id).first()
 
     if not order:
         flash("Invalid order for return", "error")
@@ -321,7 +285,7 @@ def accounts():
 
     if user.user_type == 1:
         
-        orders = UnconfirmedOrder.query.filter_by(user_id=user.user_id).all()
+        orders = Orders.query.filter_by(user_id=user.user_id).all()
         returns = PendingReturn.query.all()
         return render_template('accounts.html', user=user, orders=orders, returns=returns)
 
