@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, flash, redirect, session
+from flask import Flask, render_template, request, jsonify, flash, redirect, session, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, create_engine, text, Float
 from enum import IntEnum
@@ -239,13 +239,116 @@ def checkout():
     db.session.commit()
     return jsonify({'message': 'Checkout complete. Thank you for your purchase!'})
 
+@app.route('/request_return/<int:order_id>', methods=['POST'])
+def request_return(order_id):
+    if 'username' not in session:
+        return redirect('/login')
+
+    user = User.query.filter_by(username=session['username']).first()
+    order = UnconfirmedOrder.query.filter_by(order_id=order_id, user_id=user.user_id).first()
+
+    if not order:
+        flash("Invalid order for return", "error")
+        return redirect('/account')
+
+    reason = request.form['reason']
+    demand = request.form['demand']
+
+    return_request = PendingReturn(
+        title=f"Return for Order #{order_id}",
+        description=reason,
+        demand_specification=demand,
+        images="",  # Optional or add upload support later
+        date=datetime.now(),
+        status="pending"
+    )
+
+    db.session.add(return_request)
+    db.session.commit()
+
+    flash("Return request submitted for admin review.", "success")
+    return redirect('/account') 
+
+
+
+@app.route('/admin_returns')
+def admin_returns():
+    if 'user_type' not in session or session['user_type'] != 3: 
+        return redirect('/login')
+
+    returns = PendingReturn.query.order_by(PendingReturn.date.desc()).all()
+    return render_template('admin_returns.html', returns=returns)
+
+@app.route('/approve_return/<int:return_id>', methods=['POST'])
+def approve_return(return_id):
+    if 'user_type' not in session or session['user_type'] != 3:
+        return redirect('/login')
+
+    ret = PendingReturn.query.get_or_404(return_id)
+    ret.status = 'approved'
+    db.session.commit()
+    flash("Return approved.", "success")
+    return redirect('/admin_returns')
+
+
+@app.route('/deny_return/<int:return_id>', methods=['POST'])
+def deny_return(return_id):
+    if 'user_type' not in session or session['user_type'] != 3:
+        return redirect('/login')
+
+    ret = PendingReturn.query.get_or_404(return_id)
+    ret.status = 'denied'
+    db.session.commit()
+    flash("Return denied.", "warning")
+    return redirect('/admin_returns')
+
 @app.route('/account', methods=['GET', 'POST'])
 def accounts():
-    user_type = request.args.get('type', 'Vendor')  
+    if 'username' not in session:
+        return redirect('/login')
+
+    user = User.query.filter_by(username=session['username']).first()
+
+    if user.user_type == 1:
+        
+        orders = UnconfirmedOrder.query.filter_by(user_id=user.user_id).all()
+        returns = PendingReturn.query.all()
+        return render_template('accounts.html', user=user, orders=orders, returns=returns)
+
+    
+    user_type = request.args.get('type', 'Vendor')
     if user_type.lower() not in ['vendor', 'admin']:
-        user_type = 'Vendor'  
-    users = User.query.filter_by(role=user_type.capitalize()).all()
+        user_type = 'Vendor'
+
+    users = User.query.filter_by(user_type=2 if user_type.lower() == 'vendor' else 3).all()
     return render_template('accounts.html', users=users, selected_type=user_type.capitalize())
+
+
+@app.route('/returns', methods=['GET', 'POST'])
+def returns():
+    if 'username' not in session:
+        return redirect('/login')
+
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        demand = request.form['demand']
+        image = request.form['image']  
+        status = "pending"
+        new_return = PendingReturn(
+            title=title,
+            description=description,
+            demand_specification=demand,
+            images=image,
+            date=datetime.now(),
+            status=status
+        )
+        db.session.add(new_return)
+        db.session.commit()
+        flash("Return request submitted for admin approval.", "success")
+        return redirect('/returns')
+    return render_template('returns.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
