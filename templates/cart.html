@@ -187,7 +187,7 @@ button {
             const receiptPayload = {
                 user_id: 1,  // Replace with actual user session ID
                 cart: cartItems,
-                total_cost: totalCost.toFixed(2)
+                total_price: totalCost.toFixed(2)
             };
 
             fetch('/api/receipt', {

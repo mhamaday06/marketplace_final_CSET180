@@ -574,20 +574,44 @@ def export_cart():
     data = request.get_json()
     user_id = data.get("user_id")
     cart_items = data.get("cart", [])
-    total_cost = data.get("total_cost")
 
     for item in cart_items:
+        item_total = float(item.get("price", 0)) * int(item.get("quantity", 1))
         new_receipt = Receipt(
             user_id=user_id,
-            product_id=item.get("product_id"),  # Optional, if you add this
+            product_id=item.get("product_id"),
             product_title=item.get("product_title"),
-            quantity_item=item.get("quantity")
+            quantity_item=item.get("quantity"),
+            total_price=item_total
         )
         db.session.add(new_receipt)
 
     db.session.commit()
 
     return jsonify({"message": f"{len(cart_items)} item(s) saved to receipt."})
+@app.route('api/unconfirmed', methods=['POST'])
+def export_unconfirmed():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    cart_items = data.get("cart", [])
+    order_status = "Unconfirmed"
+
+    for item in cart_items:
+        order = UnconfirmedOrder(
+            user_id=user_id,
+            product_id=item.get("product_id"),
+            product_title=item.get("product_title"),
+            quantity_item=item.get("quantity"),
+            price=item.get("price"),
+            order_status=order_status
+        )
+# order_id = db.Column(db.Integer, primary_key=True)
+# user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+# vendor_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+# date = db.Column(db.DateTime, nullable=False)
+# items = db.Column(db.String(255), nullable=False)
+# price = db.Column(db.Integer, nullable=False)
+# order_status = db.Column(db.String(15), nullable=False)
 
 if __name__ == '__main__':
         app.run(debug=True)
