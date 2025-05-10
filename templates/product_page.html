@@ -205,9 +205,10 @@
     <div id="filter-container">
 
         <div id="search-container">
-            <input type="text" name="search_input" id="search-input" placeholder="Search Product by Title / Description">
-            <input type="text" name="color_input" id="color-input" placeholder="Search Product by Color(s)">
-            <input type="text" name="size_input" id="size-input" placeholder="Search Product by Size">
+            <input type="text" name="search_input" id="search-input" placeholder="Search by Title / Description">
+            <input type="text" name="vendor_input" id="vendor-input" placeholder="Search by Vendor Name">
+            <input type="text" name="color_input" id="color-input" placeholder="Search by Color(s)">
+            <input type="text" name="size_input" id="size-input" placeholder="Search by Size">
         </div>
 
         <select name="filter-products" id="filter-select">
@@ -250,6 +251,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         const search_bar_input = document.getElementById("search-input")
         const search_btn = document.getElementById("search-btn")
+        const vendor_input = document.getElementById("vendor-input")
         const select_tag = document.getElementById("filter-select")
         const availability_select_tag = document.getElementById("availability-filter")
         const color_input = document.getElementById("color-input")
@@ -358,9 +360,10 @@
 
         search_btn.addEventListener("click", function() {
             const search_bar = search_bar_input.value.trim().toLowerCase(); // make value as easy to work with as possible
+            const vendor = vendor_input.value.trim().toLowerCase();
             const selectedCategory = select_tag.value.toLowerCase(); // same here as above but for category
             const colors = color_input.value.toLowerCase().split(",");
-            const size = sizes_input.value.toLowerCase();
+            const size = sizes_input.value.trim().toLowerCase();
 
             let scoredProducts = [];
 
@@ -368,15 +371,17 @@
                 let counter = 0;
 
                 const name = product.name.toLowerCase();
+                const vendor_name = product.vendor.toLowerCase();
                 const description = product.description.toLowerCase();
                 const category = product.category.toLowerCase();
                 const product_colors = product.colors.toLowerCase();
-                const sizes = product.sizes.trim().toLowerCase();
+                const product_sizes = product.sizes.toLowerCase().split(',').map(s => s.trim());
 
-                if (name.includes(search_bar)) counter += 3;
+                if (name.includes(search_bar)) counter += 5;
+                if (vendor_name.includes(vendor)) counter += 5;
                 if (description.includes(search_bar)) counter += 1;
                 if (category === selectedCategory && selectedCategory !== "") counter += 1;
-                if (sizes === size && size !== "") counter += 4;
+                if (size !== "" && product_sizes.includes(size)) counter += 3;
 
                 colors.forEach(color => {
                     color = color.trim();
