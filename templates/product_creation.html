@@ -139,11 +139,6 @@
         font-family: Arial;
     }
 
-
-    #apply-btn {
-        display: none;
-    }
-
 </style>
 
 <body>
@@ -199,33 +194,9 @@
         </div>
 
         <div id="div-edit">
-            <input type="text" name="product-id-input" id="product-id-input" placeholder="Product ID">
+            <input type="text" name="product_name" id="name-input" placeholder="Name">
+            <input type="text" name="vendor_name" id="vendor-edit-input" placeholder="Vendor">
             <button id="search-btn">Search</button>
-            <button id="apply-btn">Apply</button>
-
-            <!-- <input type="text" name="title" id="title" placeholder="Product Title">
-            <input type="text" name="product-description" id="description" placeholder="Product Description">
-            <input type="text" name="warranty" id="warranty-period" placeholder="Warranty Period (Optional)">
-            <select name="category-select" id="product-category-input-edit">
-                <option value="">Select a Category</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Apparel">Apparel</option>
-                <option value="Footwear">Footwear</option>
-                <option value="Outdoor">Outdoor</option>
-                <option value="Accessories">Accessories</option>
-                <option value="Gaming">Gaming</option>
-                <option value="Home">Home</option>
-                <option value="Books">Books</option>
-                <option value="Health">Health</option>
-                <option value="Fitness">Fitness</option>
-                <option value="Toys">Toys</option>
-            </select>
-            <input type="text" name="image" id="image-1">
-            <input type="text" name="colors" id="colors" placeholder="Colors">
-            <input type="text" name="sizes" id="sizes" placeholder="Sizes">
-            <input type="text" name="inventory-space" id="inventory-space" placeholder="Inventory Space">
-            <input type="text" name="price" id="price" placeholder="Original Price">
-            <input type="text" name="discount-price" id="discount-price" placeholder="Discount Price (Optional)"> -->
         </div>
     </div>
 </body>
@@ -237,7 +208,6 @@
         const create_btn = document.getElementById("create-btn")
         const create_container = document.getElementById("div-content")
         const edit_container = document.getElementById("div-edit")
-        const product_id_input = document.getElementById("product-id-input")
         const search_btn = document.getElementById("search-btn")
 
         create_btn.addEventListener("click", function() {
@@ -250,20 +220,29 @@
             edit_container.style.display = "flex"
         })
 
-        product_id_input.addEventListener("keydown", function(event) {
-            if (event.key == "Enter") {
-                event.preventDefault();
-                search_btn.click()
-            }
-        })
+        search_btn.addEventListener("click", async function () {
+            const product_name = document.getElementById("name-input").value;
+            const vendor_name = document.getElementById("vendor-edit-input").value;
 
-        search_btn.addEventListener("click", async function() {
-            const product_id = product_id_input.value.trim();
-            const res = await fetch(`/api/product/${product_id}`);
-            const product = await res.json() // you can select which properties you want in the JSON object by using dot notation, as seen below
+            const res = await fetch("/api/product_lookup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    product_name: product_name,
+                    vendor_name: vendor_name
+                })
+            });
+
+            const product = await res.json();
+            if (res.status !== 200) {
+                alert(product.error || "Product not found.");
+                return;
+            }
+
+            const product_id = product.product_id;
 
             const html = `
-                <input type="text" name="vendor-name" id="vendor-input" placeholder="Vendor's Name" value="${product.vendor}">
+                <input type="text" name="vendor-name" id="vendor-edit-field" placeholder="Vendor's Name" value="${product.vendor}">
                 <input type="text" id="title" value="${product.name}" placeholder="Product Title">
                 <input type="text" id="description" value="${product.description}" placeholder="Product Description">
                 <input type="text" id="warranty-period" value="${product.warranty_period || ''}" placeholder="Warranty Period (Optional)">
@@ -291,25 +270,23 @@
                 <button id="apply-btn">Apply</button>
             `;
 
-            // Inject the HTML into the div-edit container
             edit_container.innerHTML = html;
 
-            // Select the dropdown and update its selected value
             const categorySelect = document.getElementById("product-category-input-edit");
-            if (product.category) {
-                categorySelect.value = product.category;
-            }
+            categorySelect.value = product.category || "";
+
             const apply_btn = document.getElementById("apply-btn");
-            apply_btn.style.display = "flex"
+
             apply_btn.addEventListener("click", async function () {
-                const product_id = product_id_input.value.trim();
+                const vendor = document.getElementById("vendor-edit-field").value;
+                const category = document.getElementById("product-category-input-edit").value;
 
                 const updated_product = {
+                    vendor: vendor,
                     name: document.getElementById("title").value,
                     description: document.getElementById("description").value,
-                    vendor: document.getElementById("vendor-input").value,
                     warranty_period: document.getElementById("warranty-period").value,
-                    category: document.getElementById("product-category-input-edit").value,
+                    category: category,
                     images: document.getElementById("image-1").value,
                     colors: document.getElementById("colors").value,
                     sizes: document.getElementById("sizes").value,
@@ -318,11 +295,11 @@
                     discount_price: document.getElementById("discount-price").value
                 };
 
+                console.log("DEBUG - sending:", updated_product);
+
                 const res = await fetch(`/api/product/${product_id}`, {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(updated_product)
                 });
 
@@ -331,76 +308,76 @@
             });
         });
 
-        const product_title_input = document.getElementById("product-title-input")
+    const product_title_input = document.getElementById("product-title-input")
 
-        const vendor_input = document.getElementById("vendor-input")
+    const vendor_input = document.getElementById("vendor-edit-input")
+
+    const image_inputs = document.getElementsByClassName("image-url-inputs");
+    const image_urls = Array.from(image_inputs).map(input => input.value).filter(url => url.trim() !== "");
+    const product_image = image_urls.join(",");
+
+    const product_description_input = document.getElementById("product-description-input")
+
+    const add_image_btn = document.getElementById("add-image-btn")
+
+    const product_warranty_input = document.getElementById("product-warranty-input")
+
+    const product_category_input = document.getElementById("product-category-input")
+
+    const available_colors_input = document.getElementById("available-colors-input")
+
+    const sizes_input = document.getElementById("sizes-input")
+
+    const inventory_size_input = document.getElementById("inventory-size-input")
+
+    const price_input = document.getElementById("price-input")
+
+    const create_product_btn = document.getElementById("create-product-btn")
+
+    add_image_btn.addEventListener("click", function() {
+        const last_image_input = image_inputs[image_inputs.length - 1];
+
+        const newId = `product-image-${image_inputs.length + 1}-input`;
+        const html = `<input type="text" name="product-images" id="${newId}" class="image-url-inputs" placeholder="url for image">`;
+
+        last_image_input.insertAdjacentHTML("afterend", html)
+    })
+
+    create_product_btn.addEventListener("click", async function () {
+        const product_title = product_title_input.value;
+        const vendor = vendor_input.value;
+        const product_description = product_description_input.value;
+        const product_warranty = product_warranty_input.value;
+        const product_category = product_category_input.value;
+        const available_colors = available_colors_input.value;
+        const inventory_size = inventory_size_input.value;
+        const sizes = sizes_input.value;
+        const price = price_input.value;
 
         const image_inputs = document.getElementsByClassName("image-url-inputs");
         const image_urls = Array.from(image_inputs).map(input => input.value).filter(url => url.trim() !== "");
         const product_image = image_urls.join(",");
 
-        const product_description_input = document.getElementById("product-description-input")
-
-        const add_image_btn = document.getElementById("add-image-btn")
-
-        const product_warranty_input = document.getElementById("product-warranty-input")
-
-        const product_category_input = document.getElementById("product-category-input")
-
-        const available_colors_input = document.getElementById("available-colors-input")
-
-        const sizes_input = document.getElementById("sizes-input")
-
-        const inventory_size_input = document.getElementById("inventory-size-input")
-
-        const price_input = document.getElementById("price-input")
-
-        const create_product_btn = document.getElementById("create-product-btn")
-
-        add_image_btn.addEventListener("click", function() {
-            const last_image_input = image_inputs[image_inputs.length - 1];
-
-            const newId = `product-image-${image_inputs.length + 1}-input`;
-            const html = `<input type="text" name="product-images" id="${newId}" class="image-url-inputs" placeholder="url for image">`;
-
-            last_image_input.insertAdjacentHTML("afterend", html)
-        })
-
-        create_product_btn.addEventListener("click", async function () {
-            const product_title = product_title_input.value;
-            const vendor = vendor_input.value;
-            const product_description = product_description_input.value;
-            const product_warranty = product_warranty_input.value;
-            const product_category = product_category_input.value;
-            const available_colors = available_colors_input.value;
-            const inventory_size = inventory_size_input.value;
-            const sizes = sizes_input.value;
-            const price = price_input.value;
-
-            const image_inputs = document.getElementsByClassName("image-url-inputs");
-            const image_urls = Array.from(image_inputs).map(input => input.value).filter(url => url.trim() !== "");
-            const product_image = image_urls.join(",");
-
-            const res = await fetch("/api/create_product", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    product_title: product_title,
-                    product_images: product_image,
-                    product_description: product_description,
-                    vendor: vendor,
-                    product_warranty: product_warranty,
-                    product_category: product_category,
-                    available_colors: available_colors,
-                    inventory_size: inventory_size,
-                    sizes: sizes,
-                    price: price
-                })
-            });
-
-            const result = await res.json();
-            alert(result.message || "Product created!");
+        const res = await fetch("/api/create_product", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                product_title: product_title,
+                product_images: product_image,
+                product_description: product_description,
+                vendor: vendor,
+                product_warranty: product_warranty,
+                product_category: product_category,
+                available_colors: available_colors,
+                inventory_size: inventory_size,
+                sizes: sizes,
+                price: price
+            })
         });
-    })
+
+        const result = await res.json();
+        alert(result.message || "Product created!");
+    });
+});
 </script>
 </html>

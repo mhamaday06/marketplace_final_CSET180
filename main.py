@@ -508,6 +508,43 @@ def get_products():
 
     return jsonify({"products": product_list})
 
+@app.route('/api/product_lookup', methods=['POST'])
+def product_lookup():
+    data = request.get_json()
+    product_name = data.get("product_name", "").strip()
+    vendor_name = data.get("vendor_name", "").strip()
+
+    query = Product.query
+
+    if product_name:
+        query = query.filter(Product.name.ilike(f"%{product_name}%"))
+    if vendor_name:
+        query = query.filter(Product.vendor.ilike(f"%{vendor_name}%"))
+
+    product = query.first()
+
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
+
+    product_data = {
+        "product_id": product.product_id,
+        "name": product.name,
+        "vendor": product.vendor,
+        "description": product.description,
+        "warranty_period": product.warranty_period,
+        "category": product.category,
+        "images": product.images,
+        "colors": product.colors,
+        "sizes": product.sizes,
+        "inventory_space": product.inventory_space,
+        "price": product.price,
+        "discount_price": product.discount_price,
+        "discount_time": product.discount_time.isoformat() if product.discount_time else None
+    }
+
+    return jsonify(product_data)
+
+
 @app.route('/api/product/<int:product_id>', methods=["GET", "PUT"])
 def get_or_update_product(product_id):
     # Edit Functionality
@@ -526,8 +563,20 @@ def get_or_update_product(product_id):
         product.price = float(data.get("price"))
         product.discount_price = float(data["discount_price"]) if data.get("discount_price") else None
 
+        new_vendor_name = data.get("vendor")
+        if new_vendor_name:
+            product.vendor = new_vendor_name
+            vendor_user = User.query.filter_by(username=new_vendor_name).first()
+            if vendor_user:
+                product.vendor_id = vendor_user.user_id
+            else:
+                return jsonify({"error": "Vendor username not found"}), 400
+        print("Received vendor:", data.get("vendor"))
+        print("Received category:", data.get("category"))
+
         db.session.commit()
         return jsonify({"message": "Product updated successfully"})
+
 
     # GET fallback
     product = Product.query.get_or_404(product_id)
