@@ -106,7 +106,28 @@ button {
 </body>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const userId = JSON.parse('{{ user_id | tojson | safe }}');
+        fetch('/api/get_user_id')
+        .then(res => {
+            if (!res.ok) {
+                console.error("Failed to fetch user ID. Status:", res.status);
+                throw new Error("Failed to fetch user ID.");
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.user_id) {
+                userId = data.user_id;
+                console.log("Logged-in user ID:", userId);
+            } else {
+                console.warn("User ID not found in session. Response:", data);
+                alert("You must be logged in to make a purchase.");
+            }
+        })
+        .catch(err => {
+            console.error("Error fetching user ID:", err);
+            alert("Something went wrong while checking your login status.");
+        });
+
         const purchase_btn = document.getElementById("purchase-btn")
         let data_info = 0
     

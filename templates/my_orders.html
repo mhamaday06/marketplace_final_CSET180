@@ -91,19 +91,34 @@
 
     #div-content {
         display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        /* border: 1px red solid; */
+    }
+
+    .products {
+        display: flex;
         flex-direction: column;
-        height: 100%;
-        border: 1px red solid;
+        padding: 20px;
+        /* border: 1px blue solid; */
+        background-color: rgb(30, 30, 30);
+        width: 400px;
     }
 
     .title {
         text-align: center;
-        font-size: 35px;
+        font-size: 40px;
+    }
+
+    .product-content {
+        font-size: 20px;
     }
 
     .images {
         max-height: 200px;
         margin: 0 auto;
+        margin-bottom: 15px;
     }
     .quantity {
 
@@ -129,17 +144,19 @@
         <div id="div-content">
             {% if orders %}
                 {% for order in orders %}
-                    <h3 class="product-content title" id="title-1"><strong>{{ order.product_title }}</strong></h3><br>
-                    <img class="product-content images" src="{{ order.image_url }}" alt="Product image">
-                    <p class="product-content quantity" id="quantity-1"><strong>Quantity:</strong> {{ order.quantity_item }}</p><br>
-                    <p class="product-content total" id="total-1"><strong>Total:</strong> ${{ order.total_price }}</p><br>
-                    <p class="product-content date" id="date-1"><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
+                    <div class="products">
+                        <h3 class="title" id="title-1"><strong>{{ order.product_title }}</strong></h3><br>
+                        <img class="product-content images" src="{{ order.image_url }}" alt="Product image">
+                        <p class="product-content quantity" id="quantity-1"><strong>Quantity:</strong> {{ order.quantity_item }}</p><br>
+                        <p class="product-content total" id="total-1"><strong>Total:</strong> ${{ order.total_price }}</p><br>
+                        <p class="product-content date" id="date-1"><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
 
-                    <form action="{{ url_for('submit_review') }}" method="POST">
-                        <input type="hidden" name="product_id" value="{{ order.product_id }}">
-                        <textarea name="review_text" placeholder="Write a review..."></textarea>
-                        <button type="submit">Submit Review</button>
-                    </form>
+                        <form action="{{ url_for('submit_review') }}" method="POST">
+                            <input type="hidden" name="product_id" value="{{ order.product_id }}">
+                            <textarea name="review_text" placeholder="Write a review..."></textarea>
+                            <button type="submit">Submit Review</button>
+                        </form>
+                    </div>
                 {% endfor %}
             {% else %}
                 <p>You have no orders yet.</p>

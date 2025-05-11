@@ -441,12 +441,14 @@ def my_orders():
     for order in orders:
         product = Product.query.get(order.product_id)
         orders_with_images.append({
-            "title": order.product_title,
-            "quantity": order.quantity_item,
+            "product_title": order.product_title,
+            "quantity_item": order.quantity_item,
             "total_price": order.total_price,
             "date_purchased": order.date_purchased,
-            "image_url": product.images if product else None
+            "image_url": product.images if product else None,
+            "product_id": order.product_id
         })
+
 
     return render_template('my_orders.html', orders=orders_with_images)
 
@@ -672,6 +674,13 @@ def export_cart():
     db.session.commit()
 
     return jsonify({"message": f"{len(cart_items)} item(s) saved to receipt."})
+
+@app.route('/api/get_user_id')
+def get_user_id():
+    if 'user_id' in session:
+        return jsonify({"user_id": session['user_id']})
+    return jsonify({"error": "Not logged in"}), 401
+
 @app.route('/api/sent_order', methods=['POST'])
 def send_order():
     data = request.get_json()
