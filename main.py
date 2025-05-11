@@ -61,6 +61,7 @@ class Orders(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     status = db.Column(SQLAlchemyEnum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
     total_price = db.Column(db.Float, nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
 
 
 class CartItem(db.Model):
@@ -79,7 +80,7 @@ class Review(db.Model):
     description = db.Column(db.Text)
     date = db.Column(db.DateTime)
     image = db.Column(db.String(255))
-
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
 
 class PendingReturn(db.Model):
     return_id = db.Column(db.Integer, primary_key=True)
@@ -429,6 +430,62 @@ def product_page():
 def product_detail():
     return render_template("product_detail.html")
 
+@app.route('/my_orders')
+def my_orders():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    orders = Receipt.query.filter_by(user_id=user_id).all()
+    orders_with_images = []
+    for order in orders:
+        product = Product.query.get(order.product_id)
+        orders_with_images.append({
+            "title": order.product_title,
+            "quantity": order.quantity_item,
+            "total_price": order.total_price,
+            "date_purchased": order.date_purchased,
+            "image_url": product.images if product else None
+        })
+
+    return render_template('my_orders.html', orders=orders_with_images)
+
+@app.route('/submit_review', methods=['POST'])
+def submit_review():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    product_id = request.form['product_id']
+    review_text = request.form['review_text']
+
+    # Look up the product to get vendor_id
+    product = Product.query.filter_by(product_id=product_id).first()
+    if not product:
+        return "Product not found", 404
+
+    vendor_id = product.vendor_id
+
+    existing_review = Review.query.filter_by(
+        product_id=product_id,
+        reviewers_name=session['username']
+    ).first()
+
+    if existing_review:
+        return "You've already reviewed this product.", 400
+
+
+    review = Review(
+        vendor_id=vendor_id,
+        product_id=product_id,
+        reviewers_name=session['username'],
+        description=review_text,
+        date=datetime.now()
+    )
+
+    db.session.add(review)
+    db.session.commit()
+
+    return redirect(url_for('my_orders'))
 
 @app.route('/api/create_product', methods=['POST'])
 def create_product():
