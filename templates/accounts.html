@@ -54,6 +54,7 @@
             <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
             <li><a href=" {{ url_for('product_page') }} ">Product Page</a></li>
             <li><a href="{{ url_for('accounts') }}"></a>Accounts</li>
+            <li><a href="{{ url_for('my_orders') }}">My Orders</a></li>
             {% if session.get('user_type') == 3 %}
     <li><a href="{{ url_for('admin_returns') }}">Manage Returns</a></li>
 {% endif %}
