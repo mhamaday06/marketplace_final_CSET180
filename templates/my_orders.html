@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <style>
 
@@ -51,6 +52,12 @@
         font-size: 40px;
     }
 
+    textarea {
+        height: 150px;
+        padding: 10px;
+        margin: 10px 0px;
+    }
+
     button {
         border: 1px transparent solid;
         border-radius: 5px;
@@ -58,6 +65,8 @@
         background-color: red;
         color: white;
         padding: 15px 10px;
+        margin: 0 auto;
+        margin-top: 5px;
     }
 
     button:hover {
@@ -101,9 +110,15 @@
         display: flex;
         flex-direction: column;
         padding: 20px;
+        margin-bottom: 15px;
         /* border: 1px blue solid; */
         background-color: rgb(30, 30, 30);
         width: 400px;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
     }
 
     .title {
@@ -122,6 +137,22 @@
     }
     .quantity {
 
+    }
+
+    .star-rating {
+        display: flex;
+        justify-content: center;
+    }
+
+    .star-rating .fa-star {
+        font-size: 40px;
+        color: white;
+        cursor: pointer;
+        padding: 10px 0px;
+    }
+
+    .star-rating .fa-star.filled {
+        color: gold;
     }
     
 </style>
@@ -145,17 +176,24 @@
         <div id="div-content">
             {% if orders %}
                 {% for order in orders %}
-                    <div class="products">
+                <div class="products" data-product-id="{{ order.product_id }}">
                         <h3 class="title" id="title-1"><strong>{{ order.product_title }}</strong></h3><br>
                         <img class="product-content images" src="{{ order.image_url }}" alt="Product image">
                         <p class="product-content quantity" id="quantity-1"><strong>Quantity:</strong> {{ order.quantity_item }}</p><br>
                         <p class="product-content total" id="total-1"><strong>Total:</strong> ${{ order.total_price }}</p><br>
                         <p class="product-content date" id="date-1"><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
 
+                        <div class="star-rating">
+                            {% for i in range(1, 6) %}
+                            <i class="fas fa-star" onclick="setRating('{{ i }}', '{{ order.product_id }}')"></i>
+                            {% endfor %}
+                          </div>
+                        
                         <form action="{{ url_for('submit_review') }}" method="POST">
+                            <input type="hidden" id="reviewer-username" value="{{ session['username'] }}">
                             <input type="hidden" name="product_id" value="{{ order.product_id }}">
-                            <textarea name="review_text" placeholder="Write a review..."></textarea>
-                            <button type="submit">Submit Review</button>
+                            <textarea id="review-description-{{ order.product_id }}" name="review_text" placeholder="Write a review..."></textarea>
+                            <button onclick="handleReviewSubmission(event, '{{ order.product_id }}')">Submit Review</button>
                         </form>
                     </div>
                 {% endfor %}
@@ -167,7 +205,73 @@
 </body>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        
-    })
+
+        const ratings = {}; // Track rating per product ID
+
+        window.setRating = function(rating, productId) {
+            ratings[productId] = rating;
+            updateStars(productId, rating);
+        };
+
+        function updateStars(productId, highlightCount) {
+            const starContainer = document.querySelector(`.products[data-product-id="${productId}"] .star-rating`);
+            const stars = starContainer.querySelectorAll('i');
+
+            stars.forEach((star, index) => {
+                star.classList.toggle('filled', index < highlightCount);
+            });
+        }
+
+        document.querySelectorAll(".star-rating").forEach(container => {
+            const productId = container.closest(".products").getAttribute("data-product-id");
+            const stars = container.querySelectorAll("i");
+
+            stars.forEach((star, index) => {
+                star.addEventListener("mouseenter", () => updateStars(productId, index + 1));
+                star.addEventListener("mouseleave", () => {
+                    const currentRating = ratings[productId] || 0;
+                    updateStars(productId, currentRating);
+                });
+            });
+        });
+
+        window.handleReviewSubmission = function(event, productId) {
+            event.preventDefault();
+
+            const description = document.getElementById('review-description-' + productId).value.trim();
+            const rating = ratings[productId] || 0;
+            const username = document.getElementById('reviewer-username').value;
+            const image = document.getElementById("");
+
+            if (!description || rating === 0) {
+                alert('Please fill in both a description and a star rating.');
+                return;
+            }
+
+            fetch("/api/review", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: username,
+                    description: description,
+                    rating: rating,
+                    image: image,
+                    product_id: productId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                } else {
+                    alert("Review submitted!");
+                }
+            })
+            .catch(err => {
+                console.error("Fetch error:", err);
+                alert("Something went wrong. Try again.");
+            });
+        }
+    });
 </script>
 </html>
