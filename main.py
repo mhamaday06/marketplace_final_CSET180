@@ -80,8 +80,6 @@ class Order(db.Model):
     status = db.Column(db.String(50), nullable=False, default='pending')
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
 
-
-
 class Review(db.Model):
     review_id = db.Column(db.Integer, primary_key=True)
     reviewers_name = db.Column(db.String(50))
@@ -100,7 +98,6 @@ class PendingReturn(db.Model):
     title = db.Column(db.String(60), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(11), nullable=False)
-
 
 class Chat(db.Model):
     chat_id = db.Column(db.Integer, primary_key=True)
