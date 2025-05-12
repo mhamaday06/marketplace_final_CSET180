@@ -128,31 +128,7 @@ class Receipt(db.Model):
 def index():
     return render_template('index.html')
 
-@app.route('/admin_dashboard')
-def admin_dashboard():
-    if 'user_type' in session and session['user_type'] == 3:  
-        vendors = User.query.filter_by(user_type=2, is_approved=False).all()
-        return render_template('admin_dashboard.html', users=vendors)
-    else:
-        return redirect('/login')
 
-@app.route('/approve_user/<int:user_id>', methods=['POST'])
-def approve_user(user_id):
-    user = User.query.get(user_id)
-    if user and user.user_type == 2:  
-        user.is_approved = True
-        db.session.commit()
-        flash("Vendor approved!", "success")
-    return redirect('/admin_dashboard')
-
-@app.route('/deny_user/<int:user_id>', methods=['POST'])
-def deny_user(user_id):
-    user = User.query.get(user_id)
-    if user and user.user_type == 2:  
-        db.session.delete(user)
-        db.session.commit()
-        flash("Vendor denied and deleted.", "success")
-    return redirect('/admin_dashboard')
 
 @app.route('/cart')
 def view_cart():
@@ -459,16 +435,16 @@ def signup():
         email = request.form['email']
         username = request.form['username']
         password = request.form['password']
-        user_type = request.form.get('user_type', 1)  
+        user_type = request.form.get('user_type', 1)
 
         if not name or not email or not username or not password:
             flash("All fields are required", "error")
-            return redirect('/signup') 
+            return redirect('/signup')
 
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash("User already exists", "error")
-            return redirect('/signup')  
+            return redirect('/signup')
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
@@ -484,7 +460,7 @@ def signup():
         db.session.commit()
 
         flash("Account created successfully!", "success")
-        return redirect('/login')  
+        return redirect('/login')
     return render_template('signup.html')
 
 
