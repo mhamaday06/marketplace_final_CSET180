@@ -337,13 +337,15 @@ def returns():
         title = request.form['title']
         description = request.form['description']
         demand = request.form['demand']
-        image = request.form['image']  
+        image = request.form['image'] 
+        comment = request.form.get('comment') 
         status = "pending"
         new_return = PendingReturn(
             title=title,
             description=description,
             demand_specification=demand,
             images=image,
+            customer_comment=comment,
             date=datetime.now(),
             status=status
         )
@@ -351,7 +353,7 @@ def returns():
         db.session.commit()
         flash("Return request submitted for admin approval.", "success")
         return redirect('/returns')
-    return render_template('returns.html')
+    return render_template('accounts.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -418,7 +420,7 @@ def staff_login():
                 if user.user_type == 2:
                     return redirect('/product_creation')
                 else:
-                    return redirect('/admin_dashboard')
+                    return redirect('/admin_returns')
             else:
                 return render_template('staff_login.html', error="Access denied for non-staff users.")
         return render_template('staff_login.html', error="Invalid username or password")
@@ -466,9 +468,44 @@ def logout():
     session.clear()
     return render_template('login.html')
 
-@app.route('/vendor_signup')
-def vendor_signup():
-    return render_template('vendor_signup')
+@app.route('/vendor_admin_signup', methods=['GET', 'POST'])
+def vendor_admin_signup():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        username = request.form['username']
+        password = request.form['password']
+        user_type = int(request.form['user_type'])  # 2 = vendor, 3 = admin
+
+        if not all([name, email, username, password]):
+            flash("All fields are required", "error")
+            return redirect('/vendor_admin_signup')
+
+        if user_type not in [2, 3]:
+            flash("Invalid account type", "error")
+            return redirect('/vendor_admin_signup')
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("User already exists", "error")
+            return redirect('/vendor_admin_signup')
+
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        new_user = User(
+            name=name,
+            email=email,
+            username=username,
+            password=hashed_password,
+            user_type=user_type
+        )
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Account created successfully!", "success")
+        return redirect('/login')
+
+    return render_template('vendor_admin_signup.html')
 
 
 @app.route('/product_creation')
