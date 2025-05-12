@@ -83,6 +83,7 @@ button {
                     <span class="cart-item cart-header cart-column">ITEM</span>
                     <span class="cart-price cart-header cart-column" >PRICE PER ITEM</span>
                     <span class="cart-quantity cart-header cart-column">QUANTITY</span>
+                    <span class="cart-header cart-column">REMOVE</span>
                 </div>
                 <div id="itemsincart" class="cart-items">
 
@@ -153,20 +154,30 @@ button {
                     quantityCol.appendChild(qtyDisplay);
                     quantityCol.appendChild(plusBtn);
     
-                    itemRow.appendChild(nameCol);
-                    itemRow.appendChild(priceCol);
-                    itemRow.appendChild(quantityCol);
-    
-                    itemsContainer.appendChild(itemRow);
-    
-                    total += item.price * item.quantity;
-                });
-    
-                totalElement.innerText = `$${total.toFixed(2)}`;
-            })
-            .catch(error => {
-                console.error('Error loading cart:', error);
+                   
+                const removeCol = document.createElement('span');
+                removeCol.classList.add('cart-column');
+                const removeBtn = document.createElement('button');
+                removeBtn.innerText = 'Remove';
+                removeBtn.onclick = () => removeItemFromCart(item.name);
+                removeCol.appendChild(removeBtn);
+
+                
+                itemRow.appendChild(nameCol);
+                itemRow.appendChild(priceCol);
+                itemRow.appendChild(quantityCol);
+                itemRow.appendChild(removeCol); 
+
+                itemsContainer.appendChild(itemRow);
+
+                total += item.price * item.quantity;
             });
+
+            totalElement.innerText = `$${total.toFixed(2)}`;
+        })
+        .catch(error => {
+            console.error('Error loading cart:', error);
+        });
     
         purchase_btn.addEventListener("click", function () {
             const rows = document.querySelectorAll('.cart-row');
