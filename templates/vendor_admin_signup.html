@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vendor/Admin Signup</title>
+</head>
+<body>
+    <h2>Sign up as Vendor or Admin</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        {% if category == 'error' %}
+        <p style="color: red;">{{ message }}</p>
+    {% else %}
+        <p style="color: green;">{{ message }}</p>
+    {% endif %}
+        {% endfor %}
+    {% endwith %}
+    
+    <form method="POST">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Username:</label><br>
+        <input type="text" name="username" required><br><br>
+
+        <label>Password:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <label>Account Type:</label><br>
+        <select name="user_type">
+            <option value="2">Vendor</option>
+            <option value="3">Admin</option>
+        </select><br><br>
+
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <p><a href="{{ url_for('login') }}">Back to login</a></p>
+</body>
+</html>
