@@ -34,6 +34,7 @@ class User(db.Model):
     username = db.Column(db.String(15), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.SmallInteger, nullable=False)  # 1 = customer, 2 = vendor, 3 = admin
+    balance = db.Column(db.Numeric(10, 2), default=0.00)
 
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
@@ -70,6 +71,15 @@ class CartItem(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=1)
     added_at = db.Column(db.DateTime, server_default=db.func.now())
+
+class Order(db.Model):
+    order_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    vendor_id = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), nullable=False, default='pending')
+    total_price = db.Column(db.Numeric(10, 2), nullable=False)
+
 
 
 class Review(db.Model):
@@ -146,19 +156,17 @@ def deny_user(user_id):
 
 @app.route('/cart')
 def view_cart():
-    if 'username' not in session:
+    if 'user_id' not in session:
         return redirect('/login')
-
-    user = User.query.filter_by(username=session['username']).first()
-    return render_template('cart.html', user_id=user.user_id)
+    return render_template('cart.html', user_id=session['user_id'])
 
 
 @app.route("/api/cart")
 def cart():
-    if 'username' not in session:
+    if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    user = User.query.filter_by(username=session['username']).first()
+    user = User.query.get(session['user_id'])
     cart_items = CartItem.query.filter_by(user_id=user.user_id).all()
 
     result = []
@@ -172,7 +180,6 @@ def cart():
         })
 
     return jsonify({"cart": result})
-
 
 
 @app.route('/api/add_to_cart', methods=['POST'])
@@ -213,6 +220,55 @@ def remove_from_cart():
         return jsonify({'message': 'Item removed'})
     else:
         return jsonify({'error': 'Item not found in cart'}), 404
+
+
+@app.route('/update_cart', methods=['POST'])
+def update_cart():
+    if 'user_id' not in session:
+        return jsonify({'message': 'Not logged in'}), 401
+
+    data = request.get_json()
+    user_id = session['user_id']
+
+    for item in data['items']:
+        product_id = item['product_id']
+        quantity = item['quantity']
+
+        existing_item = db.execute(
+            "SELECT * FROM cart_item WHERE user_id = %s AND product_id = %s",
+            (user_id, product_id)
+        ).fetchone()
+
+        if existing_item:
+            db.execute(
+                "UPDATE cart_item SET quantity = %s WHERE user_id = %s AND product_id = %s",
+                (quantity, user_id, product_id)
+            )
+        else:
+            db.execute(
+                "INSERT INTO cart_item (user_id, product_id, quantity) VALUES (%s, %s, %s)",
+                (user_id, product_id, quantity)
+            )
+
+    db.commit()
+    return jsonify({'message': 'Cart updated successfully'})
+
+
+@app.route('/get_cart')
+def get_cart():
+    if 'user_id' not in session:
+        return jsonify([])
+
+    user_id = session['user_id']
+    cart_items = db.execute("""
+        SELECT cart_item.product_id, cart_item.quantity, Product.name, Product.price, Product.images
+        FROM cart_item
+        JOIN Product ON cart_item.product_id = Product.product_id
+        WHERE cart_item.user_id = %s
+    """, (user_id,)).fetchall()
+
+    return jsonify([dict(item) for item in cart_items])
+
 
 @app.route('/request_return/<int:order_id>', methods=['POST'])
 def request_return(order_id):
@@ -296,7 +352,7 @@ def accounts():
         user_type = 'Vendor'
 
     users = User.query.filter_by(user_type=2 if user_type.lower() == 'vendor' else 3).all()
-    return render_template('accounts.html', users=users, selected_type=user_type.capitalize())
+    return render_template('accounts.html', user=user, orders=orders, returns=returns)
 
 
 @app.route('/returns', methods=['GET', 'POST'])
@@ -338,13 +394,32 @@ def login():
             session['user_type'] = user.user_type
             session['user_id'] = user.user_id
 
+            
+            cart_items = (
+                db.session.query(
+                    CartItem.product_id,
+                    CartItem.quantity,
+                    Product.name,
+                    Product.price,
+                    Product.images
+                )
+                .join(Product, CartItem.product_id == Product.product_id)
+                .filter(CartItem.user_id == user.user_id)
+                .all()
+            )
+
+            session['cart'] = [dict(zip(
+                ['product_id', 'quantity', 'name', 'price', 'images'],
+                item
+            )) for item in cart_items]
+
             # Redirect based on user type
             if user.user_type == 1:
-                return redirect('/')  
+                return redirect('/')
             elif user.user_type == 2:
-                return redirect('/product_creation')  
+                return redirect('/product_creation')
             elif user.user_type == 3:
-                return redirect('/admin_dashboard')  
+                return redirect('/admin_dashboard')
 
         error = "Invalid username or password"
         return render_template('login.html', error=error)
@@ -411,6 +486,12 @@ def signup():
         flash("Account created successfully!", "success")
         return redirect('/login')  
     return render_template('signup.html')
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return render_template('login.html')
 
 @app.route('/vendor_signup')
 def vendor_signup():
@@ -654,16 +735,21 @@ def get_or_update_product(product_id):
         "discount_time": product.discount_time.isoformat() if product.discount_time else None
     }
     return jsonify(product_data)
+
+
+
 @app.route('/api/receipt', methods=['POST'])
 def export_cart():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
-    user_id = data.get("user_id")
     cart_items = data.get("cart", [])
 
     for item in cart_items:
         item_total = float(item.get("price", 0)) * int(item.get("quantity", 1))
         new_receipt = Receipt(
-            user_id=user_id,
+            user_id=session['user_id'],
             product_id=item.get("product_id"),
             product_title=item.get("product_title"),
             quantity_item=item.get("quantity"),
@@ -683,6 +769,8 @@ def get_user_id():
 
 @app.route('/api/sent_order', methods=['POST'])
 def send_order():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
     data = request.get_json()
     user_id = data.get("user_id")
     cart_items = data.get("cart", [])
