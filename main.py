@@ -545,42 +545,7 @@ def my_orders():
 
     return render_template("my_orders.html", orders=orders_with_images)
 
-# @app.route('/submit_review', methods=['POST'])
-# def submit_review():
-#     if 'user_id' not in session:
-#         return redirect(url_for('login'))
 
-#     product_id = request.form['product_id']
-#     review_text = request.form['review_text']
-
-#     # Look up the product to get vendor_id
-#     product = Product.query.filter_by(product_id=product_id).first()
-#     if not product:
-#         return "Product not found", 404
-
-#     vendor_id = product.vendor_id
-
-#     existing_review = Review.query.filter_by(
-#         product_id=product_id,
-#         reviewers_name=session['username']
-#     ).first()
-
-#     if existing_review:
-#         return "You've already reviewed this product.", 400
-
-
-#     review = Review(
-#         vendor_id=vendor_id,
-#         product_id=product_id,
-#         reviewers_name=session['username'],
-#         description=review_text,
-#         date=datetime.now()
-#     )
-
-#     db.session.add(review)
-#     db.session.commit()
-
-#     return redirect(url_for('my_orders'))
 
 @app.route('/api/create_product', methods=['POST'])
 def create_product():
@@ -640,6 +605,7 @@ def complete_order():
 @app.route('/api/get_products', methods=['GET'])
 def get_products():
     products = Product.query.all()
+    print(f"Fetched {len(products)} products")
     product_list = []
     for product in products:
         product_list.append({

@@ -181,7 +181,7 @@ button {
                 removeCol.classList.add('cart-column');
                 const removeBtn = document.createElement('button');
                 removeBtn.innerText = 'Remove';
-                removeBtn.onclick = () => removeItemFromCart(item.name);
+                removeBtn.onclick = () => removeItemFromCart(item.product_id);
                 removeCol.appendChild(removeBtn);
 
                 
@@ -271,49 +271,60 @@ button {
     });
     
     function updateQuantity(item, delta) {
-        const rows = document.querySelectorAll('.cart-row');
-        rows.forEach(row => {
-            const name = row.querySelector('.cart-item')?.innerText;
-            if (name === item.name) {
-                const qtySpan = row.querySelector('.qty-display');
-                let quantity = parseInt(qtySpan.innerText);
-                quantity = Math.max(1, quantity + delta); // avoid going below 1
-                qtySpan.innerText = quantity;
+    const rows = document.querySelectorAll('.cart-row');
+    rows.forEach(row => {
+        const name = row.querySelector('.cart-item')?.innerText;
+        if (name === item.name) {
+            const qtySpan = row.querySelector('.qty-display');
+            let quantity = parseInt(qtySpan.innerText);
+            quantity = Math.max(1, quantity + delta); // prevent 0
+
+            // Update displayed quantity
+            qtySpan.innerText = quantity;
+            fetch('/api/update_cart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        items: [{
+            product_id: item.product_id,
+            quantity: quantity
+            }]
+        })
+    });
+
+            // Recalculate total price
+            const totalElement = document.querySelector('.cart-total-price');
+            let newTotal = 0;
+
+            document.querySelectorAll('.cart-row').forEach(row => {
+                const qty = parseInt(row.querySelector('.qty-display')?.innerText || "0");
+                const price = parseFloat(row.querySelector('.cart-price')?.innerText.replace('$', '') || "0");
+                newTotal += qty * price;
+            });
+
+            totalElement.innerText = `$${newTotal.toFixed(2)}`;
+
+            
+        }
+    });
+}
     
-                const totalElement = document.querySelector('.cart-total-price');
-                const newTotal = Array.from(document.querySelectorAll('.cart-row')).reduce((acc, r) => {
-                    const qty = parseInt(r.querySelector('.qty-display')?.innerText || "0");
-                    const pr = parseFloat(r.querySelector('.cart-price')?.innerText.replace('$', '') || "0");
-                    return acc + qty * pr;
-                }, 0);
-                totalElement.innerText = `$${newTotal.toFixed(2)}`;
-            }
-        });
-    }
-    
-    function removeItemFromCart(productName) {
-        fetch('/api/products')
-            .then(response => response.json())
-            .then(products => {
-                const product = products.find(p => p.name === productName);
-                if (!product) return alert('Product not found.');
-    
-                return fetch('/api/remove_from_cart', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ product_id: product.product_id })
-                });
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to remove item');
-                return response.json();
-            })
-            .then(data => {
-                alert(data.message);
-                loadCartItems();
-            })
-            .catch(error => console.error(error));
-    }
+function removeItemFromCart(productId) {
+    fetch('/api/remove_from_cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: productId })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to remove item');
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message);
+        location.reload(); 
+    })
+    .catch(error => console.error(error));
+}
     
     function returnHome() {
         window.location.href = "/";
