@@ -77,7 +77,7 @@ class Order(db.Model):
     order_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     vendor_id = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     status = db.Column(db.String(50), nullable=False, default='pending')
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
 
@@ -107,6 +107,15 @@ class Chat(db.Model):
     images = db.Column(db.String(255))
     return_id = db.Column(db.Integer, db.ForeignKey('pending_return.return_id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_message'
+
+    message_id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.Integer, db.ForeignKey('chat.chat_id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    message_text = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Receipt(db.Model):
     __tablename__ = 'receipt'
@@ -878,14 +887,49 @@ def load_reviews():
 
     return jsonify(review_list)
 
-# @app.route('api/load_chats', methods=['GET'])
-# def load_chats():
-#     user_id = request.args.get('id', type=int)
-#     chats = Chat.query.filter_by(user_id=user_id).all()
+@app.route('/api/send_message', methods=['POST'])
+def send_message():
+    data = request.get_json()
+    chat_id = data.get("chat_id")
+    sender_id = session.get('user_id')
+    message_text = data.get("message")
 
-#     # chat_list = [{
-#     #     "name": chat.
-#     # }]
+    if not all([chat_id, sender_id, message_text]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    new_message = ChatMessage(
+        chat_id=chat_id,
+        sender_id=sender_id,
+        message_text=message_text
+    )
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify({"message": "Message sent successfully"})
+
+@app.route('/api/get_user_chats')
+def get_user_chats():
+    user_id = request.args.get('user_id', type=int)
+    chats = Chat.query.filter_by(user_id=user_id).all()
+    return jsonify([
+        {
+            "chat_id": chat.chat_id,
+            "name": chat.name,
+            "description": chat.description
+        } for chat in chats
+    ])
+
+@app.route('/api/load_messages/<int:chat_id>', methods=['GET'])
+def load_messages(chat_id):
+    messages = ChatMessage.query.filter_by(chat_id=chat_id).order_by(ChatMessage.timestamp.asc()).all()
+    return jsonify([
+        {
+            "sender_id": msg.sender_id,
+            "message": msg.message_text,
+            "timestamp": msg.timestamp.strftime('%Y-%m-%d %H:%M')
+        }
+        for msg in messages
+    ])
 
 @app.route('/api/new_chat', methods=['POST'])
 def new_chat():
