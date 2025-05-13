@@ -547,6 +547,7 @@ def my_orders():
 
     return render_template("my_orders.html", orders=orders_with_images)
 
+
 @app.route('/api/create_product', methods=['POST'])
 def create_product():
     if 'user_id' not in session:
@@ -605,6 +606,7 @@ def complete_order():
 @app.route('/api/get_products', methods=['GET'])
 def get_products():
     products = Product.query.all()
+    print(f"Fetched {len(products)} products")
     product_list = []
     for product in products:
         product_list.append({
