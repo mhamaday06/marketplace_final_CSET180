@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, flash, redirect, session, url_for, flash
+from flask import Flask, render_template, request, jsonify, flash, redirect, session, url_for, flash, redirect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, create_engine, text, Float
 from enum import IntEnum, Enum
@@ -8,7 +8,15 @@ import mysql.connector
 from datetime import datetime, timezone
 from sqlalchemy.types import Enum as SQLAlchemyEnum
 from decimal import Decimal
-
+from werkzeug.utils import secure_filename
+import os
+def get_db_connection():
+    return mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='cset155',
+        database='ecommerce_application'
+    )
 class OrderStatus(Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
@@ -100,6 +108,10 @@ class PendingReturn(db.Model):
     date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(11), nullable=False)
 
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'))
+
 class Chat(db.Model):
     chat_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
@@ -127,6 +139,43 @@ class Receipt(db.Model):
 @app.route('/')
 def index():
     return render_template('product_page.html')
+
+
+
+@app.route('/submit_complaint', methods=['POST'])
+def submit_complaint():
+    if 'user_id' not in session:
+        flash("Please log in to submit a complaint.", "error")
+        return redirect(url_for('login'))
+
+    title = request.form['title']
+    description = request.form['description']
+    demand_spec = request.form['demand_specification']
+    product_id = request.form['product_id']
+    order_id = request.form['order_id']
+    user_id = session['user_id']
+    date = datetime.now()
+    image_path = None
+
+    if 'image' in request.files:
+        image = request.files['image']
+        if image.filename != '':
+            filename = secure_filename(image.filename)
+            image_path = os.path.join('static/uploads', filename)
+            image.save(image_path)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO Pending_Return (title, description, demand_specification, date, status, images, user_id, order_id, product_id)
+        VALUES (%s, %s, %s, %s, 'pending', %s, %s, %s, %s)
+    """, (title, description, demand_spec, date, image_path, user_id, order_id, product_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash("Complaint submitted successfully.", "success")
+    return redirect(url_for('accounts'))
 
 @app.route('/cart')
 def view_cart():
@@ -259,31 +308,28 @@ def request_return(order_id):
         flash("Invalid order for return", "error")
         return redirect('/account')
 
-    reason = request.form['reason']
-    demand = request.form['demand']
+    reason = request.form['return_reason']
+    product_id = request.form.get('product_id')
+    product_title = request.form.get('product_title')
 
     return_request = PendingReturn(
-        title=f"Return for Order #{order_id}",
+        title=f"Return Request for {product_title}",
         description=reason,
-        demand_specification=demand,
-        images="",  # Optional or add upload support later
+        demand_specification="Return",  # hardcoded
+        images="",
+        customer_comment="",
         date=datetime.now(),
-        status="pending"
+        status="pending",
+        user_id=user.user_id,
+        order_id=order_id,
+        product_id=product_id
     )
 
     db.session.add(return_request)
     db.session.commit()
 
     flash("Return request submitted for admin review.", "success")
-    return redirect('/account') 
-
-@app.route('/admin_returns')
-def admin_returns():
-    if 'user_type' not in session or session['user_type'] not in [2, 3]:
-        return redirect('/login')
-
-    returns = PendingReturn.query.order_by(PendingReturn.date.desc()).all()
-    return render_template('admin_returns.html', returns=returns)
+    return redirect('/my_orders')
 
 @app.route('/approve_return/<int:return_id>', methods=['POST'])
 def approve_return(return_id):
@@ -309,6 +355,7 @@ def deny_return(return_id):
     return redirect('/admin_returns')
 
 @app.route('/account', methods=['GET', 'POST'])
+@app.route('/account', methods=['GET', 'POST'])
 def accounts():
     if 'username' not in session:
         return redirect('/login')
@@ -316,18 +363,17 @@ def accounts():
     user = User.query.filter_by(username=session['username']).first()
 
     if user.user_type == 1:
-        
         orders = Orders.query.filter_by(user_id=user.user_id).all()
-        returns = PendingReturn.query.all()
+        returns = PendingReturn.query.filter_by(user_id=user.user_id).all()
         return render_template('accounts.html', user=user, orders=orders, returns=returns)
 
-    
+    # Admin or Vendor view
     user_type = request.args.get('type', 'Vendor')
     if user_type.lower() not in ['vendor', 'admin']:
         user_type = 'Vendor'
 
     users = User.query.filter_by(user_type=2 if user_type.lower() == 'vendor' else 3).all()
-    return render_template('accounts.html', user=user, orders=orders, returns=returns)
+    return render_template('accounts.html', user=user, users=users)
 
 
 @app.route('/returns', methods=['GET', 'POST'])
