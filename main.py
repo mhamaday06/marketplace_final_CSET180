@@ -364,7 +364,6 @@ def deny_return(return_id):
     return redirect('/admin_returns')
 
 @app.route('/account', methods=['GET', 'POST'])
-@app.route('/account', methods=['GET', 'POST'])
 def accounts():
     if 'username' not in session:
         return redirect('/login')
@@ -372,9 +371,19 @@ def accounts():
     user = User.query.filter_by(username=session['username']).first()
 
     if user.user_type == 1:
-        orders = Orders.query.filter_by(user_id=user.user_id).all()
+        raw_orders = Orders.query.filter_by(user_id=user.user_id).all()
         returns = PendingReturn.query.filter_by(user_id=user.user_id).all()
-        return render_template('accounts.html', user=user, orders=orders, returns=returns)
+
+        order_data = []
+        for order in raw_orders:
+            product = Product.query.get(order.product_id)
+            order_data.append({
+                "order_id": order.order_id,
+                "product_id": order.product_id,
+                "product_title": product.name if product else "Unknown Product"
+            })
+
+        return render_template('accounts.html', user=user, orders=order_data, returns=returns)
 
     # Admin or Vendor view
     user_type = request.args.get('type', 'Vendor')
