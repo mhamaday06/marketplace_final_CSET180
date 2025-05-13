@@ -850,6 +850,26 @@ def submit_review():
 
     return jsonify({"message": "Review submitted successfully"})
 
+@app.route('/api/load_reviews', methods=['GET'])
+def load_reviews():
+    product_id = request.args.get('id', type=int)
+
+    if not product_id:
+        return jsonify({"error": "Product ID is required"}), 400
+
+    reviews = Review.query.filter_by(product_id=product_id).all()
+
+    review_list = [{
+        "name": review.reviewers_name,
+        "rating": review.rating,
+        "description": review.description,
+        "date": review.date.strftime('%Y-%m-%d') if review.date else None,
+        "image": review.image
+    } for review in reviews]
+
+    return jsonify(review_list)
+
+
 # class Review(db.Model):
 #     review_id = db.Column(db.Integer, primary_key=True)
 #     reviewers_name = db.Column(db.String(50))
