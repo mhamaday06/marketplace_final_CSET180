@@ -60,6 +60,9 @@
             <li><a href="{{ url_for('accounts') }}">Accounts</a></li>
             <li><a href="{{ url_for('my_orders') }}">My Orders</a></li>
             <li><a href="{{ url_for('vendor_admin_signup') }}">Vendor/Admin Signup</a></li>
+            {% if session.get('user_type') in [2, 3] %}
+            <li><a href="{{ url_for('admin_returns') }}">Returns Dashboard</a></li>
+        {% endif %}
         </ul>
     </nav>
 </body>

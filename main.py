@@ -277,7 +277,7 @@ def request_return(order_id):
 
 @app.route('/admin_returns')
 def admin_returns():
-    if 'user_type' not in session or session['user_type'] != 3: 
+    if 'user_type' not in session or session['user_type'] not in [2, 3]:
         return redirect('/login')
 
     returns = PendingReturn.query.order_by(PendingReturn.date.desc()).all()
@@ -285,7 +285,7 @@ def admin_returns():
 
 @app.route('/approve_return/<int:return_id>', methods=['POST'])
 def approve_return(return_id):
-    if 'user_type' not in session or session['user_type'] != 3:
+    if 'user_type' not in session or session['user_type'] not in [2, 3]:
         return redirect('/login')
 
     ret = PendingReturn.query.get_or_404(return_id)
@@ -297,7 +297,7 @@ def approve_return(return_id):
 
 @app.route('/deny_return/<int:return_id>', methods=['POST'])
 def deny_return(return_id):
-    if 'user_type' not in session or session['user_type'] != 3:
+    if 'user_type' not in session or session['user_type'] not in [2, 3]:
         return redirect('/login')
 
     ret = PendingReturn.query.get_or_404(return_id)
@@ -445,7 +445,7 @@ def signup():
             flash("User already exists", "error")
             return redirect('/signup')
 
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         new_user = User(
             name=name,

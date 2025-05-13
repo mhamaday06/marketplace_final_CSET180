@@ -66,83 +66,17 @@
         <input type="text" name="name" placeholder="Name" required>
         <input type="text" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>
-    
+
         <label for="user_type">Select User Type:</label>
         <select name="user_type" id="user_type" required>
             <option value="1">User</option>
             <option value="2">Vendor</option>
         </select>
-    
+
         <button type="submit">Sign Up</button>
     </form>
 </body>
 <script>
-document.getElementById('signup-form').addEventListener('submit', async function (e) {
-    const user_type = document.getElementById("user_type")
-    e.preventDefault();
 
-    const form = e.target;
-    const formData = new FormData(form);
-
-    if (user_type.value === "1") {
-        const data = {
-            name: formData.get('name'),
-            email: formData.get('email'),
-            username: formData.get('username'),
-            password: formData.get('password'),
-            user_type: 1 
-        };
-
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'text/html',
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams(data)
-            });
-
-            if (response.redirected) {
-                window.location.href = response.url;
-            } else {
-                const text = await response.text();
-                document.body.innerHTML = text;
-            }
-        } catch (error) {
-            console.error('Signup error:', error);
-            alert('An error occurred while signing up.');
-        }
-    } else if (user_type.value === "2") {
-        const data = {
-            name: formData.get('name'),
-            email: formData.get('email'),
-            username: formData.get('username'),
-            password: formData.get('password'),
-            user_type: 2
-        };
-
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'text/html',
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams(data)
-            });
-
-            if (response.redirected) {
-                window.location.href = response.url;
-            } else {
-                const text = await response.text();
-                document.body.innerHTML = text;
-            }
-        } catch (error) {
-            console.error('Signup error:', error);
-            alert('An error occurred while signing up.');
-        }
-    }
-});
 </script>
 </html>
