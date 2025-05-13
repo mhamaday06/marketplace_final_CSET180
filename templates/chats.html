@@ -127,6 +127,12 @@
         border-radius: 5px;
     }
 
+    #existing-chat-div {
+        display: none;
+        flex-direction: column;
+        border: 1px blue;
+    }
+
 
 </style>
 <body>
@@ -164,39 +170,76 @@
             <!-- Code to load when chatting in an existing chat -->
             <div id="existing-chat-div">
                 
+
+                <textarea id="another-message" name="another-message" placeholder="Next Message..."></textarea>
+                <button id="existing-send-btn">Send</button>
             </div>
         </div>
     </div>
 </body>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const create_btn = document.getElementById("create-btn")
-        const existing_btn = document.getElementById("existing-btn")
+    document.addEventListener("DOMContentLoaded", function () {
+        const create_btn = document.getElementById("create-btn");
+        const existing_btn = document.getElementById("existing-btn");
 
-        const new_chat_send_btn = document.getElementById("new-chat-send-btn")
+        const new_chat_send_btn = document.getElementById("new-chat-send-btn");
+        const new_chat_div = document.getElementById("new-chat-div");
+        const existing_chat_div = document.getElementById("existing-chat-div");
 
-        const new_chat_div = document.getElementById("new-chat-div")
-        const existing_chat_div = document.getElementById("existing-chat-div")
+        let selectedChatId = null;
 
-        create_btn.addEventListener("click", function() { // event listener for the create chat section
-            new_chat_div.style.display = "flex"
-            existing_chat_div.style.display = "none"
-        })
+        create_btn.addEventListener("click", function () {
+            new_chat_div.style.display = "flex";
+            existing_chat_div.style.display = "none";
+        });
+
+        existing_btn.addEventListener("click", function () {
+            new_chat_div.style.display = "none";
+            existing_chat_div.style.display = "flex";
+
+            // Fetch and display existing chats
+            fetch('/api/get_user_id')
+                .then(res => res.json())
+                .then(data => {
+                    return fetch(`/api/get_user_chats?user_id=${data.user_id}`);
+                })
+                .then(res => res.json())
+                .then(chats => {
+                    const container = document.createElement("div");
+
+                    chats.forEach(chat => {
+                        const vendor_name = document.createElement("h2");
+                        vendor_name.textContent = chat.name;
+                        vendor_name.addEventListener("click", () => {
+                            selectedChatId = chat.chat_id;
+                            loadMessages(selectedChatId);
+                        });
+                        container.appendChild(vendor_name);
+                    });
+
+                    existing_chat_div.prepend(container);
+                });
+
+            const messageInput = document.getElementById("another-message");
+
+            existing_send_btn.addEventListener("click", function () {
+                fetch('/api/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: selectedChatId,
+                        message: messageInput.value
+                    })
+                });
+            });
+        });
 
         new_chat_send_btn.addEventListener("click", function () {
             fetch('/api/get_user_id')
-                .then(res => {
-                    if (!res.ok) {
-                        console.error("Failed to fetch user ID. Status:", res.status);
-                        throw new Error("Failed to fetch user ID.");
-                    }
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
                     if (data.user_id) {
                         const user_id = data.user_id;
-                        console.log("Logged-in user ID:", user_id);
-
                         const name = document.getElementById("vendor-name").value;
                         const description = document.getElementById("chat-description").value;
 
@@ -211,21 +254,20 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(new_chat_payload)
                         })
-                        .then(response => response.json())
-                        .then(chatRes => {
-                            if (chatRes.error) {
-                                alert("Chat creation failed: " + chatRes.error);
-                                return;
-                            }
+                            .then(response => response.json())
+                            .then(chatRes => {
+                                if (chatRes.error) {
+                                    alert("Chat creation failed: " + chatRes.error);
+                                    return;
+                                }
 
-                            alert("Chat created successfully!");
-                            console.log("Chat created:", chatRes);
-                        })
-                        .catch(err => {
-                            console.error("Error submitting new chat:", err);
-                            alert("Something went wrong creating the chat.");
-                        });
-
+                                alert("Chat created successfully!");
+                                console.log("Chat created:", chatRes);
+                            })
+                            .catch(err => {
+                                console.error("Error submitting new chat:", err);
+                                alert("Something went wrong creating the chat.");
+                            });
                     } else {
                         alert("You must be logged in to create a chat.");
                     }
@@ -236,17 +278,25 @@
                 });
         });
 
-        existing_btn.addEventListener("click", function() { // load users chats when existing btn is clicked
-            new_chat_div.style.display = "none"
-            existing_chat_div.style.display = "flex"
+        function loadMessages(chatId) {
+            fetch(`/api/load_messages/${chatId}`)
+                .then(res => res.json())
+                .then(messages => {
+                    messages.forEach(msg => {
+                        const sender = document.createElement("h2");
+                        sender.classList.add("existing-vendor-name");
+                        sender.textContent = `User ${msg.sender_id}`;
 
-            // fetch users chats
-            fetch(`api/users_chats/id=${id}`)
-            .then(response => response.json())
-            .then(chats => {
-                
-            })
-        })  
-    })
+                        const description = document.createElement("p");
+                        description.classList.add("existing-description");
+                        description.textContent = msg.message;
+
+                        existing_chat_div.appendChild(sender);
+                        existing_chat_div.appendChild(description);
+                    });
+                });
+        }
+    });
 </script>
+
 </html>
