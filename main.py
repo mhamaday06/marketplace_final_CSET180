@@ -524,24 +524,26 @@ def product_detail():
 @app.route('/my_orders')
 def my_orders():
     if 'user_id' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('login'))  # Or show a message
 
     user_id = session['user_id']
-    orders = Receipt.query.filter_by(user_id=user_id).all()
+
+    # Only load this user's orders
+    receipts = Receipt.query.filter_by(user_id=user_id).all()
     orders_with_images = []
-    for order in orders:
-        product = Product.query.get(order.product_id)
+
+    for receipt in receipts:
+        product = Product.query.get(receipt.product_id)
         orders_with_images.append({
-            "product_title": order.product_title,
-            "quantity_item": order.quantity_item,
-            "total_price": order.total_price,
-            "date_purchased": order.date_purchased,
-            "image_url": product.images if product else None,
-            "product_id": order.product_id
+            "product_id": receipt.product_id,
+            "product_title": receipt.product_title,
+            "quantity_item": receipt.quantity_item,
+            "date_purchased": receipt.date_purchased,
+            "total_price": receipt.total_price,
+            "image_url": product.images if product else "/static/default.jpg"
         })
 
-
-    return render_template('my_orders.html', orders=orders_with_images)
+    return render_template("my_orders.html", orders=orders_with_images)
 
 # @app.route('/submit_review', methods=['POST'])
 # def submit_review():
