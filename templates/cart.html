@@ -300,14 +300,13 @@ button {
             let newTotal = 0;
 
             document.querySelectorAll('.cart-row').forEach(row => {
-                const qty = parseInt(row.querySelector('.qty-display')?.innerText || "0");
+                const qtyText = row.querySelector('.qty-display')?.innerText;
+                const qty = qtyText ? parseInt(qtyText.trim()) : 0;
                 const price = parseFloat(row.querySelector('.cart-price')?.innerText.replace('$', '') || "0");
                 newTotal += qty * price;
             });
 
             totalElement.innerText = `$${newTotal.toFixed(2)}`;
-
-            
         }
     });
 }
