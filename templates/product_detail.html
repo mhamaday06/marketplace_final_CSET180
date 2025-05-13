@@ -49,6 +49,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        flex-direction: column;
     }
 
     #product-div {
@@ -182,6 +183,46 @@
         transition: 0.2s ease-in;
     }
 
+    #review-div {
+        display: flex;
+        flex-direction: column;
+        /* border: 1px red solid; */
+        width: 70%;
+        background-color: rgb(30, 30, 30);
+        margin: 20px 0px;
+    }
+
+    #review-div h1 {
+        font-size: 60px;
+        text-align: center;
+        padding-top: 10px;
+    }
+
+    .review-content {
+        display: flex;
+        flex-direction: column;
+
+    }
+
+    .review-name {
+        font-size: 50px;
+        text-align: center;
+        padding: 20px 0px 10px 0px;
+    }
+
+    .stars-div {
+        display: flex;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 40px;
+    }
+
+    .review-description {
+        text-align: center;
+        font-size: 18px;
+        padding: 20px 0px;
+    }
+
 </style>
 <body>
     <nav>
@@ -219,148 +260,202 @@
                 </div>
             </div>
         </div>
+
+        <div id="review-div">
+            <!-- Generated content loads below -->
+
+        </div>
     </div>
 </body>
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    let size_counter = 0
-    let color_counter = 0
+    document.addEventListener("DOMContentLoaded", function() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id");
+        let size_counter = 0
+        let color_counter = 0
 
-    document.getElementById("cart-btn").addEventListener("click", () => {
-    fetch(`/api/product/${id}`)
-        .then(response => {
-            if (!response.ok) throw new Error("Failed to get product data.");
-            return response.json();
-        })
-        .then(product => {
-            return fetch('/api/add_to_cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    product_id: product.product_id,
-                    quantity: 1  // default to 1; adjust as needed
-                })
-            });
-        })
-        .then(response => {
-            if (!response.ok) throw new Error("Failed to add to cart.");
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message || "Product added to cart!");
-        })
-        .catch(err => {
-            console.error("Error adding to cart:", err);
-            alert("Failed to add to cart.");
-        });
-});
-
-    fetch(`/api/product/${id}`)
-        .then(response => response.json())
-        .then(product => {
-            const imageUrls = product.images.split(',');
-            const sizes = product.sizes.split(',').map(size => size.trim());
-            const colors = product.colors.split(",").map(color => color.trim())
-
-            document.getElementById("product-name").textContent = product.name;
-            document.getElementById("product-description").textContent = product.description;
-            document.getElementById("product-price").textContent = `$${product.price}`;
-            document.getElementById("product-title-image").src = imageUrls[0].trim();
-
-            const sizesContainer = document.getElementById("product-sizes");
-            sizesContainer.innerHTML = ""; // Clear any existing content
-
-            const product_container = document.getElementById("description-div")
-
-            const validSizes = sizes.filter(s => s.trim() !== "");
-            if (validSizes.length > 0) {
-                sizesContainer.style.display = "flex";
-                sizes.forEach(size => {
-                    if (size_counter == 0) {
-                        const size_p = document.createElement("p")
-                        size_p.innerText = "Sizes: "
-                        size_p.classList.add("headings")
-
-                        const div = document.createElement("div");
-                        div.classList.add("sizes");
-
-                        const childDiv = document.createElement("div");
-                        childDiv.classList.add("size-image-container");
-
-                        const sizeImg = document.createElement("img");
-                        sizeImg.classList.add("size-images")
-                        sizeImg.src = imageUrls[0].trim();
-                        sizeImg.style.width = "100%";
-                        sizeImg.style.height = "100%";
-                        sizeImg.style.objectFit = "contain";
-
-                        childDiv.appendChild(sizeImg);
-                        div.appendChild(childDiv);
-
-                        const p = document.createElement("p");
-                        p.innerText = size;
-                        p.style.textAlign = "center";
-                        p.style.padding = "5px 0";
-                        div.appendChild(p);
-
-                        product_container.insertBefore(size_p, sizesContainer);
-                        sizesContainer.appendChild(div);
-                        size_counter += 1
-                    } else {
-                        const div = document.createElement("div");
-                        div.classList.add("sizes");
-
-                        const childDiv = document.createElement("div");
-                        childDiv.classList.add("size-image-container");
-
-                        const sizeImg = document.createElement("img");
-                        sizeImg.classList.add("size-images")
-                        sizeImg.src = imageUrls[0].trim();
-                        sizeImg.style.width = "100%";
-                        sizeImg.style.height = "100%";
-                        sizeImg.style.objectFit = "contain";
-
-                        childDiv.appendChild(sizeImg);
-                        div.appendChild(childDiv);
-
-                        const p = document.createElement("p");
-                        p.innerText = size;
-                        p.style.textAlign = "center";
-                        p.style.padding = "5px 0";
-                        div.appendChild(p);
-
-                        sizesContainer.appendChild(div);
-                        product_container.style.display = "flex"
-                    }
+        document.getElementById("cart-btn").addEventListener("click", () => {
+        fetch(`/api/product/${id}`)
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to get product data.");
+                return response.json();
+            })
+            .then(product => {
+                return fetch('/api/add_to_cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_id: product.product_id,
+                        quantity: 1  // default to 1; adjust as needed
+                    })
                 });
-            }
-            
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to add to cart.");
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message || "Product added to cart!");
+            })
+            .catch(err => {
+                console.error("Error adding to cart:", err);
+                alert("Failed to add to cart.");
+            });
+    });
 
-            const colorsContainer = document.getElementById("product-colors");
+        fetch(`/api/product/${id}`)
+            .then(response => response.json())
+            .then(product => {
+                const imageUrls = product.images.split(',');
+                const sizes = product.sizes.split(',').map(size => size.trim());
+                const colors = product.colors.split(",").map(color => color.trim())
 
-            colors.forEach((color, index) => {
-                if (color_counter === 0) {
-                    const label = document.createElement("p");
-                    label.innerText = "Colors:";
-                    label.classList.add("headings");
-                    product_container.insertBefore(label, colorsContainer);
-                    colorsContainer.style.display = "flex"; // Make container visible
-                    color_counter++;
+                document.getElementById("product-name").textContent = product.name;
+                document.getElementById("product-description").textContent = product.description;
+                document.getElementById("product-price").textContent = `$${product.price}`;
+                document.getElementById("product-title-image").src = imageUrls[0].trim();
+
+                const sizesContainer = document.getElementById("product-sizes");
+                sizesContainer.innerHTML = ""; // Clear any existing content
+
+                const product_container = document.getElementById("description-div")
+
+                const validSizes = sizes.filter(s => s.trim() !== "");
+                if (validSizes.length > 0) {
+                    sizesContainer.style.display = "flex";
+                    sizes.forEach(size => {
+                        if (size_counter == 0) {
+                            const size_p = document.createElement("p")
+                            size_p.innerText = "Sizes: "
+                            size_p.classList.add("headings")
+
+                            const div = document.createElement("div");
+                            div.classList.add("sizes");
+
+                            const childDiv = document.createElement("div");
+                            childDiv.classList.add("size-image-container");
+
+                            const sizeImg = document.createElement("img");
+                            sizeImg.classList.add("size-images")
+                            sizeImg.src = imageUrls[0].trim();
+                            sizeImg.style.width = "100%";
+                            sizeImg.style.height = "100%";
+                            sizeImg.style.objectFit = "contain";
+
+                            childDiv.appendChild(sizeImg);
+                            div.appendChild(childDiv);
+
+                            const p = document.createElement("p");
+                            p.innerText = size;
+                            p.style.textAlign = "center";
+                            p.style.padding = "5px 0";
+                            div.appendChild(p);
+
+                            product_container.insertBefore(size_p, sizesContainer);
+                            sizesContainer.appendChild(div);
+                            size_counter += 1
+                        } else {
+                            const div = document.createElement("div");
+                            div.classList.add("sizes");
+
+                            const childDiv = document.createElement("div");
+                            childDiv.classList.add("size-image-container");
+
+                            const sizeImg = document.createElement("img");
+                            sizeImg.classList.add("size-images")
+                            sizeImg.src = imageUrls[0].trim();
+                            sizeImg.style.width = "100%";
+                            sizeImg.style.height = "100%";
+                            sizeImg.style.objectFit = "contain";
+
+                            childDiv.appendChild(sizeImg);
+                            div.appendChild(childDiv);
+
+                            const p = document.createElement("p");
+                            p.innerText = size;
+                            p.style.textAlign = "center";
+                            p.style.padding = "5px 0";
+                            div.appendChild(p);
+
+                            sizesContainer.appendChild(div);
+                            product_container.style.display = "flex"
+                        }
+                    });
+                }
+                
+
+                const colorsContainer = document.getElementById("product-colors");
+
+                colors.forEach((color, index) => {
+                    if (color_counter === 0) {
+                        const label = document.createElement("p");
+                        label.innerText = "Colors:";
+                        label.classList.add("headings");
+                        product_container.insertBefore(label, colorsContainer);
+                        colorsContainer.style.display = "flex"; // Make container visible
+                        color_counter++;
+                    }
+
+                    const box = document.createElement("div");
+                    box.classList.add("color-box");
+                    box.style.backgroundColor = color;
+
+                    colorsContainer.appendChild(box);
+                });
+            })
+            .catch(err => {
+                console.error("Failed to load product:", err);
+            });
+
+        // Now fetch reviews for loaded product
+        fetch(`/api/load_reviews?id=${id}`)
+        .then(response => response.json())
+        .then(reviews => {
+            const reviewDiv = document.getElementById("review-div");
+            reviewDiv.innerHTML = "";  // Clear previous
+
+            const heading = document.createElement('h1')
+            heading.id = 'reviews-heading'
+            heading.textContent = 'Reviews'
+
+            const divider = document.createElement("hr");
+            divider.style.border = "1px solid white";
+            divider.style.margin = "20px auto";
+            divider.style.width = '70%';
+
+            reviewDiv.append(heading)
+            reviewDiv.append(divider)
+
+            reviews.forEach(review => {
+                const container = document.createElement("div");
+                container.classList.add('review-content')
+
+                const name = document.createElement("h3");
+                name.textContent = review.name;
+                name.classList.add('review-name')
+
+                const stars = document.createElement("div");
+                stars.classList.add('stars-div')
+                for (let i = 1; i <= 5; i++) {
+                    const star = document.createElement("span");
+                    star.textContent = i <= review.rating ? "★" : "☆";
+                    star.style.color = i <= review.rating ? "gold" : "white";
+                    stars.appendChild(star);
                 }
 
-                const box = document.createElement("div");
-                box.classList.add("color-box");
-                box.style.backgroundColor = color;
+                const desc = document.createElement("p");
+                desc.textContent = review.description;
+                desc.classList.add('review-description')
 
-                colorsContainer.appendChild(box);
+                container.appendChild(name);
+                container.appendChild(stars);
+                container.appendChild(desc);
+                reviewDiv.appendChild(container);
             });
         })
-        .catch(err => {
-            console.error("Failed to load product:", err);
-        });
+    });
 </script>
 
 </html>

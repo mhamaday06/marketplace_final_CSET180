@@ -177,23 +177,23 @@
             {% if orders %}
                 {% for order in orders %}
                 <div class="products" data-product-id="{{ order.product_id }}">
-                        <h3 class="title" id="title-1"><strong>{{ order.product_title }}</strong></h3><br>
+                        <h3 class="title" id="title-{{ loop.index }}"><strong>{{ order.product_title }}</strong></h3><br>
                         <img class="product-content images" src="{{ order.image_url }}" alt="Product image">
                         <p class="product-content quantity" id="quantity-1"><strong>Quantity:</strong> {{ order.quantity_item }}</p><br>
                         <p class="product-content total" id="total-1"><strong>Total:</strong> ${{ order.total_price }}</p><br>
                         <p class="product-content date" id="date-1"><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
 
-                        <div class="star-rating">
+                        <div class="star-rating" data-product-id="{{ order.product_id }}" data-card-index="{{ loop.index }}" data-key="{{ order.product_id }}-{{ loop.index }}">
                             {% for i in range(1, 6) %}
-                            <i class="fas fa-star" onclick="setRating('{{ i }}', '{{ order.product_id }}')"></i>
+                                <i class="fas fa-star"></i>
                             {% endfor %}
-                          </div>
+                        </div>                        
                         
                         <form action="{{ url_for('submit_review') }}" method="POST">
-                            <input type="hidden" id="reviewer-username" value="{{ session['username'] }}">
+                            <input type="hidden" id="reviewer-username-{{ order.product_id }}-{{ loop.index }}" value="{{ session['username'] }}">
                             <input type="hidden" name="product_id" value="{{ order.product_id }}">
-                            <textarea id="review-description-{{ order.product_id }}" name="review_text" placeholder="Write a review..."></textarea>
-                            <button onclick="handleReviewSubmission(event, '{{ order.product_id }}')">Submit Review</button>
+                            <textarea id="review-description-{{ order.product_id }}-{{ loop.index }}" name="review_text" placeholder="Write a review..."></textarea>
+                            <button onclick="handleReviewSubmission(event, '{{ order.product_id }}', '{{ loop.index }}')">Submit Review</button>
                         </form>
                     </div>
                 {% endfor %}
@@ -204,44 +204,44 @@
     </div>
 </body>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
+        const ratings = {};
 
-        const ratings = {}; // Track rating per product ID
-
-        window.setRating = function(rating, productId) {
-            ratings[productId] = rating;
-            updateStars(productId, rating);
-        };
-
-        function updateStars(productId, highlightCount) {
-            const starContainer = document.querySelector(`.products[data-product-id="${productId}"] .star-rating`);
-            const stars = starContainer.querySelectorAll('i');
-
+        function updateStars(container, count) {
+            const stars = container.querySelectorAll("i");
             stars.forEach((star, index) => {
-                star.classList.toggle('filled', index < highlightCount);
+                star.classList.toggle("filled", index < count);
             });
         }
 
         document.querySelectorAll(".star-rating").forEach(container => {
-            const productId = container.closest(".products").getAttribute("data-product-id");
+            const productId = container.getAttribute("data-product-id");
+            const cardIndex = container.getAttribute("data-card-index");
+            const key = `${productId}-${cardIndex}`;
             const stars = container.querySelectorAll("i");
 
             stars.forEach((star, index) => {
-                star.addEventListener("mouseenter", () => updateStars(productId, index + 1));
+                // Hover effect
+                star.addEventListener("mouseenter", () => updateStars(container, index + 1));
                 star.addEventListener("mouseleave", () => {
-                    const currentRating = ratings[productId] || 0;
-                    updateStars(productId, currentRating);
+                    updateStars(container, ratings[key] || 0);
+                });
+
+                // Click sets the rating
+                star.addEventListener("click", () => {
+                    ratings[key] = index + 1;
+                    updateStars(container, ratings[key]);
+                    console.log(`Set rating ${ratings[key]} for ${key}`);
                 });
             });
         });
 
-        window.handleReviewSubmission = function(event, productId) {
+        window.handleReviewSubmission = function (event, productId, cardIndex) {
             event.preventDefault();
-
-            const description = document.getElementById('review-description-' + productId).value.trim();
-            const rating = ratings[productId] || 0;
-            const username = document.getElementById('reviewer-username').value;
-            const image = document.getElementById("");
+            const key = `${productId}-${cardIndex}`;
+            const description = document.getElementById(`review-description-${productId}-${cardIndex}`).value.trim();
+            const rating = ratings[key] || 0;
+            const username = document.getElementById(`reviewer-username-${productId}-${cardIndex}`).value;
 
             if (!description || rating === 0) {
                 alert('Please fill in both a description and a star rating.');
@@ -255,23 +255,22 @@
                     name: username,
                     description: description,
                     rating: rating,
-                    image: image,
                     product_id: productId
                 })
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error: " + data.error);
-                } else {
-                    alert("Review submitted!");
-                }
-            })
-            .catch(err => {
-                console.error("Fetch error:", err);
-                alert("Something went wrong. Try again.");
-            });
-        }
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                    } else {
+                        alert("Review submitted!");
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                    alert("Something went wrong. Try again.");
+                });
+        };
     });
 </script>
 </html>
