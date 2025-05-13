@@ -7,6 +7,7 @@ import bcrypt
 import mysql.connector
 from datetime import datetime, timezone
 from sqlalchemy.types import Enum as SQLAlchemyEnum
+from decimal import Decimal
 
 class OrderStatus(Enum):
     PENDING = "pending"
@@ -368,6 +369,7 @@ def login():
             session['username'] = user.username
             session['user_type'] = user.user_type
             session['user_id'] = user.user_id
+            print("Current session user_id:", session.get('user_id'))
 
             
             cart_items = (
@@ -546,7 +548,6 @@ def my_orders():
     return render_template("my_orders.html", orders=orders_with_images)
 
 
-
 @app.route('/api/create_product', methods=['POST'])
 def create_product():
     if 'user_id' not in session:
@@ -722,12 +723,19 @@ def export_cart():
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
+    user_id = session['user_id']
     cart_items = data.get("cart", [])
+
+    # Don't allow writing to receipt if user balance is insufficient
+    user = User.query.get(user_id)
+    total_cost = sum(float(item.get("price", 0)) * int(item.get("quantity", 1)) for item in cart_items)
+    if Decimal(user.balance) < Decimal(str(total_cost)):
+        return jsonify({"error": "Insufficient balance"}), 400
 
     for item in cart_items:
         item_total = float(item.get("price", 0)) * int(item.get("quantity", 1))
         new_receipt = Receipt(
-            user_id=session['user_id'],
+            user_id=user_id,
             product_id=item.get("product_id"),
             product_title=item.get("product_title"),
             quantity_item=item.get("quantity"),
@@ -736,8 +744,8 @@ def export_cart():
         db.session.add(new_receipt)
 
     db.session.commit()
-
     return jsonify({"message": f"{len(cart_items)} item(s) saved to receipt."})
+
 
 @app.route('/api/get_user_id')
 def get_user_id():
@@ -749,30 +757,62 @@ def get_user_id():
 def send_order():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
-    user_id = data.get("user_id")
     cart_items = data.get("cart", [])
     order_status = OrderStatus.PENDING
 
-    for item in cart_items:
-        item_total = float(item.get("price", 0)) * int(item.get("quantity", 1))
+    user_id = session['user_id']
+    user = User.query.get(user_id)
 
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Convert to Decimal for accurate comparison
+    total_order_cost = sum(
+        Decimal(str(item.get("price", "0"))) * Decimal(str(item.get("quantity", "1")))
+        for item in cart_items
+    )
+
+    print("User balance:", user.balance)
+    print("Total cost:", total_order_cost)
+
+    user_balance = Decimal(str(user.balance))
+    print(f"User Balance (Decimal): {user_balance}, Total Order Cost (Decimal): {total_order_cost}")
+    print("TYPE CHECK — user_balance:", type(user_balance), " total_order_cost:", type(total_order_cost))
+    if user_balance < total_order_cost:
+        return jsonify({
+            "error": "Insufficient balance to complete the purchase",
+            "user_balance": str(user.balance),
+            "required_total": str(total_order_cost)
+        }), 400
+
+    # Deduct balance
+    user.balance = user_balance - total_order_cost
+
+    for item in cart_items:
+        item_total = Decimal(str(item.get("price", "0"))) * Decimal(str(item.get("quantity", "1")))
         product_id = item.get("product_id")
+
         product = Product.query.get(product_id)
-        vendor_name = product.vendor
-        vendor_user = User.query.filter_by(username=vendor_name).first()
-        vendor_id = vendor_user.user_id
+        vendor_user = User.query.filter_by(username=product.vendor).first()
+        vendor_id = vendor_user.user_id if vendor_user else None
+
+        if not vendor_id:
+            continue  # skip if vendor missing
+
         order = Orders(
             user_id=user_id,
             vendor_id=vendor_id,
             product_id=product_id,
-            total_price=item_total,
+            total_price=float(item_total),
             status=order_status
         )
         db.session.add(order)
 
     db.session.commit()
-    return jsonify({"message": f"{len(cart_items)} item(s) sent to orders waiting to be confirmed by vendor."})
+    return jsonify({"message": f"{len(cart_items)} item(s) sent to orders and balance updated."})
+
 
 @app.route('/api/review', methods=['POST'])
 def submit_review():
