@@ -235,37 +235,41 @@ button {
                 total_price: totalCost.toFixed(2)
             };
 
-            fetch('/api/receipt', { // send to receipt 
-
+            fetch('/api/sent_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(receiptPayload)
             })
-            .then(response => {
-                if (!response.ok) throw new Error("Failed to record receipt.");
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log("Receipt recorded:", data.message);
-            })
-            .catch(error => {
-                console.error("Error sending receipt:", error);
-            });
+                if (data.error) {
+                    alert("Order failed: " + data.error);
+                    return;
+                }
 
-            fetch('/api/sent_order', { // then send to orders
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(receiptPayload)
-            })
-            .then(response => {
-                if (!response.ok) throw new Error("Failed to submitting order to orders table.");
-                return response.json();
-            })
-            .then(data => {
                 console.log("Order submitted to vendor:", data.message);
+
+                // Only record receipt if order succeeded
+                return fetch('/api/receipt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(receiptPayload)
+                });
+            })
+            .then(res => {
+                if (res && !res.ok) throw new Error("Failed to record receipt.");
+                return res ? res.json() : null;
+            })
+            .then(data => {
+                if (data) {
+                    console.log("Receipt recorded:", data.message);
+                }
+                clearCart();
+                returnHome();
             })
             .catch(error => {
-                console.error("Error sending order to orders table:", error);
+                console.error("Transaction error:", error);
+                alert("Something went wrong while processing your order.");
             });
         });
     });
