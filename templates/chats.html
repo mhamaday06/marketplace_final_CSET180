@@ -47,7 +47,7 @@
     h1 {
         text-align: center;
         padding: 20px;
-        font-size: 40px;
+        font-size: 60px;
     }
 
     button {
@@ -57,6 +57,11 @@
         background-color: red;
         color: white;
         padding: 15px 10px;
+    }
+
+    #new-chat-send-btn {
+        width: 150px;
+        margin: 10px auto;
     }
 
     button:hover {
@@ -78,15 +83,50 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        border: 1px red solid;
+        /* border: 1px red solid; */
     }
 
     #div-content {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        border: 1px blue solid;
+        /* border: 1px blue solid; */
+        width: 50%;
+        background-color: rgb(30, 30, 30);
     }
+
+    #button-container {
+        display: flex;
+        margin: 0 auto;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+
+    input {
+        margin-bottom: 10px;
+        width: 85%;
+        margin: 7px auto;
+    }
+
+    #new-chat-div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #chat-description {
+        font-family: Arial;
+        height: 200px;
+        padding: 15px 10px;
+        font-size: 16px;
+        resize: none;
+        width: 85%;
+        margin: 7px auto;
+        display: block;
+        border: 1px solid transparent;
+        border-radius: 5px;
+    }
+
 
 </style>
 <body>
@@ -117,7 +157,7 @@
             <!-- Code to load when creating a new chat -->
             <div id="new-chat-div">
                 <input type="text" name="vendor-field" id="vendor-name" placeholder="Vendor Name">
-                <input type="text" name="chat-description" id="chat-description" placeholder="Description...">
+                <textarea id="chat-description" name="chat-description" placeholder="Description..."></textarea>
                 <button id="new-chat-send-btn">Send</button>
             </div>
 
@@ -196,6 +236,17 @@
                 });
         });
 
+        existing_btn.addEventListener("click", function() { // load users chats when existing btn is clicked
+            new_chat_div.style.display = "none"
+            existing_chat_div.style.display = "flex"
+
+            // fetch users chats
+            fetch(`api/users_chats/id=${id}`)
+            .then(response => response.json())
+            .then(chats => {
+                
+            })
+        })  
     })
 </script>
 </html>
