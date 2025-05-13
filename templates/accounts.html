@@ -71,28 +71,17 @@
     </div>
 {% endif %}
 
+{% for order in orders %}
+<form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
+    <input type="hidden" name="product_id" value="{{ order.product_id }}">
+    <input type="hidden" name="product_title" value="{{ order.product_title }}">
+    <label for="return_reason">Return Reason:</label><br>
+    <textarea name="return_reason" required></textarea><br>
+    <button type="submit">Request Return</button>
+</form>
+{% endfor %}
 
-{% if user and user.user_type == 1 %}
-    <h2>Your Purchase History</h2>
-    {% for order in orders %}
-        <div style="border: 1px solid white; padding: 10px; margin: 10px;">
-            <strong>Order #{{ order.order_id }}</strong><br>
-            Items: {{ order.items }}<br>
-            Date: {{ order.date }}<br>
-            Status: {{ order.order_status }}<br>
 
-            <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
-                <label>Reason for Return:</label><br>
-                <textarea name="reason" required></textarea><br>
-
-                <label>What do you want? (Refund, Exchange, etc.):</label><br>
-                <input type="text" name="demand" required><br>
-
-                <button type="submit">Request Return</button>
-            </form>
-        </div>
-    {% endfor %}
-{% endif %}
 
 {% if session.get('username') %}
 <form method="POST" action="{{ url_for('logout') }}" style="display:inline;">
