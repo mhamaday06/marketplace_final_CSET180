@@ -102,9 +102,11 @@ class PendingReturn(db.Model):
 
 class Chat(db.Model):
     chat_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
     description = db.Column(db.Text)
     images = db.Column(db.String(255))
     return_id = db.Column(db.Integer, db.ForeignKey('pending_return.return_id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
 
 class Receipt(db.Model):
     __tablename__ = 'receipt'
@@ -274,8 +276,6 @@ def request_return(order_id):
 
     flash("Return request submitted for admin review.", "success")
     return redirect('/account') 
-
-
 
 @app.route('/admin_returns')
 def admin_returns():
@@ -878,6 +878,15 @@ def load_reviews():
 
     return jsonify(review_list)
 
+# @app.route('api/load_chats', methods=['GET'])
+# def load_chats():
+#     user_id = request.args.get('id', type=int)
+#     chats = Chat.query.filter_by(user_id=user_id).all()
+
+#     # chat_list = [{
+#     #     "name": chat.
+#     # }]
+
 @app.route('/api/new_chat', methods=['POST'])
 def new_chat():
     data = request.get_json()
@@ -887,7 +896,9 @@ def new_chat():
 
     # Example DB model usage — replace with your actual table/logic
     new_chat = Chat(
+        name=data.get("name"),
         description=description,
+        user_id=user_id,
         images="",  # default or based on UI
         return_id=None  # fill in if applicable
     )
