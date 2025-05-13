@@ -124,9 +124,7 @@ class Receipt(db.Model):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-
+    return render_template('product_page.html')
 
 @app.route('/cart')
 def view_cart():
@@ -134,6 +132,9 @@ def view_cart():
         return redirect('/login')
     return render_template('cart.html', user_id=session['user_id'])
 
+@app.route('/chats')
+def chats():
+    return render_template('chats.html')
 
 @app.route("/api/cart")
 def cart():
@@ -877,16 +878,25 @@ def load_reviews():
 
     return jsonify(review_list)
 
+@app.route('/api/new_chat', methods=['POST'])
+def new_chat():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    name = data.get("name")
+    description = data.get("description")
 
-# class Review(db.Model):
-#     review_id = db.Column(db.Integer, primary_key=True)
-#     reviewers_name = db.Column(db.String(50))
-#     rating = db.Column(db.Integer, nullable=False)
-#     vendor_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
-#     description = db.Column(db.Text)
-#     date = db.Column(db.DateTime)
-#     image = db.Column(db.String(255))
-#     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    # Example DB model usage — replace with your actual table/logic
+    new_chat = Chat(
+        description=description,
+        images="",  # default or based on UI
+        return_id=None  # fill in if applicable
+    )
+
+    db.session.add(new_chat)
+    db.session.commit()
+
+    return jsonify({"message": "Chat created successfully", "chat_id": new_chat.chat_id})
+
 
 if __name__ == '__main__':
         app.run(debug=True)

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chats</title>
+</head>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: black;
+        color: white;
+    }
+
+    nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: white;
+        margin-bottom: 20px;
+    }
+
+    nav ul {
+        list-style-type: none;
+        display: flex;
+        gap: 10px;
+        text-decoration: none;
+        padding: 20px;
+    }
+
+    nav ul li {
+        display: flex;
+        flex-direction: column;
+        font-size: 20px;
+    }
+
+    nav ul li a {
+        text-decoration: none;
+        color: black;
+    }
+
+    h1 {
+        text-align: center;
+        padding: 20px;
+        font-size: 40px;
+    }
+
+    button {
+        border: 1px transparent solid;
+        border-radius: 5px;
+        font-size: 20px;
+        background-color: red;
+        color: white;
+        padding: 15px 10px;
+    }
+
+    button:hover {
+        background-color: white;
+        color: black;
+        transition: 0.2s ease-in;
+    }
+
+    input {
+        font-size: 20px;
+        padding: 15px 10px;
+        width: 100%;
+        border: 1px transparent solid;
+        border-radius: 5px;
+    }
+
+    #div-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 1px red solid;
+    }
+
+    #div-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border: 1px blue solid;
+    }
+
+</style>
+<body>
+
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('staff_login') }}">Vendor Login</a></li>
+            <li><a href="{{ url_for('signup') }}">Signup</a></li>
+            <li><a href="{{ url_for('product_creation') }}">Create a Product</a></li>
+            <li><a href="{{ url_for('product_page') }}">Product Page</a></li>
+            <li><a href="{{ url_for('accounts') }}">Accounts</a></li>
+            <li><a href="{{ url_for('my_orders') }}">My Orders</a></li>
+            <li><a href="{{ url_for('chats') }}">Chats</a></li>
+        </ul>
+    </nav>
+
+    <h1>Chats</h1>
+
+    <div id="div-body">
+        <div id="div-content">
+
+            <div id="button-container">
+                <button id="create-btn">Create</button>
+                <button id="existing-btn">Existing</button>
+            </div>
+
+            <!-- Code to load when creating a new chat -->
+            <div id="new-chat-div">
+                <input type="text" name="vendor-field" id="vendor-name" placeholder="Vendor Name">
+                <input type="text" name="chat-description" id="chat-description" placeholder="Description...">
+                <button id="new-chat-send-btn">Send</button>
+            </div>
+
+            <!-- Code to load when chatting in an existing chat -->
+            <div id="existing-chat-div">
+                
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const create_btn = document.getElementById("create-btn")
+        const existing_btn = document.getElementById("existing-btn")
+
+        const new_chat_send_btn = document.getElementById("new-chat-send-btn")
+
+        const new_chat_div = document.getElementById("new-chat-div")
+        const existing_chat_div = document.getElementById("existing-chat-div")
+
+        create_btn.addEventListener("click", function() { // event listener for the create chat section
+            new_chat_div.style.display = "flex"
+            existing_chat_div.style.display = "none"
+        })
+
+        new_chat_send_btn.addEventListener("click", function () {
+            fetch('/api/get_user_id')
+                .then(res => {
+                    if (!res.ok) {
+                        console.error("Failed to fetch user ID. Status:", res.status);
+                        throw new Error("Failed to fetch user ID.");
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.user_id) {
+                        const user_id = data.user_id;
+                        console.log("Logged-in user ID:", user_id);
+
+                        const name = document.getElementById("vendor-name").value;
+                        const description = document.getElementById("chat-description").value;
+
+                        const new_chat_payload = {
+                            name: name,
+                            description: description,
+                            user_id: user_id
+                        };
+
+                        fetch('/api/new_chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(new_chat_payload)
+                        })
+                        .then(response => response.json())
+                        .then(chatRes => {
+                            if (chatRes.error) {
+                                alert("Chat creation failed: " + chatRes.error);
+                                return;
+                            }
+
+                            alert("Chat created successfully!");
+                            console.log("Chat created:", chatRes);
+                        })
+                        .catch(err => {
+                            console.error("Error submitting new chat:", err);
+                            alert("Something went wrong creating the chat.");
+                        });
+
+                    } else {
+                        alert("You must be logged in to create a chat.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching user ID:", err);
+                    alert("Something went wrong while checking your login status.");
+                });
+        });
+
+    })
+</script>
+</html>
