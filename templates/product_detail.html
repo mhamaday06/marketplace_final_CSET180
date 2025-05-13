@@ -188,20 +188,20 @@
         flex-direction: column;
         /* border: 1px red solid; */
         width: 70%;
-        background-color: rgb(30, 30, 30);
         margin: 20px 0px;
     }
 
     #review-div h1 {
         font-size: 60px;
         text-align: center;
-        padding-top: 10px;
+        padding: 10px;
     }
 
     .review-content {
         display: flex;
         flex-direction: column;
-
+        margin: 10px;
+        background-color: rgb(30, 30, 30);
     }
 
     .review-name {
@@ -420,13 +420,7 @@
             heading.id = 'reviews-heading'
             heading.textContent = 'Reviews'
 
-            const divider = document.createElement("hr");
-            divider.style.border = "1px solid white";
-            divider.style.margin = "20px auto";
-            divider.style.width = '70%';
-
             reviewDiv.append(heading)
-            reviewDiv.append(divider)
 
             reviews.forEach(review => {
                 const container = document.createElement("div");
