@@ -133,6 +133,47 @@
         border: 1px blue;
     }
 
+    #another-message {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+    }
+
+    #existing-send-btn {
+        display: flex;
+        justify-content: center;
+        padding: 10px 20px;
+        margin: 10px auto;
+    }
+
+    .chat-selector {
+        background-color: #444;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 6px;
+        margin: 5px 0;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
+    }
+
+    .chat-selector:hover {
+        background-color: #666;
+    }
+
+    .chat-message-group {
+        margin: 10px;
+        padding: 10px;
+        background-color: #222;
+        border-radius: 8px;
+    }
+
+    #existing-chat-div {
+        display: none;
+        flex-direction: column;
+    }
 
 </style>
 <body>
@@ -169,15 +210,19 @@
 
             <!-- Code to load when chatting in an existing chat -->
             <div id="existing-chat-div">
-                
-
-                <textarea id="another-message" name="another-message" placeholder="Next Message..."></textarea>
-                <button id="existing-send-btn">Send</button>
+                <!-- Content loads here -->
             </div>
         </div>
     </div>
 </body>
 <script>
+    let selectedChatId = null;
+    let messageInput;
+    let sendBtn;
+    let chatContainer;
+    let messageContainer;
+    let uiLoaded = false;  // <- new flag to prevent duplicate UI setup
+
     document.addEventListener("DOMContentLoaded", function () {
         const create_btn = document.getElementById("create-btn");
         const existing_btn = document.getElementById("existing-btn");
@@ -185,8 +230,6 @@
         const new_chat_send_btn = document.getElementById("new-chat-send-btn");
         const new_chat_div = document.getElementById("new-chat-div");
         const existing_chat_div = document.getElementById("existing-chat-div");
-
-        let selectedChatId = null;
 
         create_btn.addEventListener("click", function () {
             new_chat_div.style.display = "flex";
@@ -197,7 +240,27 @@
             new_chat_div.style.display = "none";
             existing_chat_div.style.display = "flex";
 
-            // Fetch and display existing chats
+            if (!uiLoaded) {
+                // Create containers once
+                chatContainer = document.createElement("div");
+                chatContainer.classList.add("chat-container");
+
+                messageContainer = document.createElement("div");
+                messageContainer.classList.add("chat-messages");
+
+                sendBtn = document.createElement("button");
+                sendBtn.id = "existing-send-btn";
+                sendBtn.textContent = "Send";
+
+                existing_chat_div.appendChild(chatContainer);
+                existing_chat_div.appendChild(messageContainer);
+                uiLoaded = true;  // ✅ prevent re-adding these again
+            }
+
+            chatContainer.innerHTML = "";
+            messageContainer.innerHTML = "";
+
+            // Fetch and render chat buttons
             fetch('/api/get_user_id')
                 .then(res => res.json())
                 .then(data => {
@@ -205,33 +268,19 @@
                 })
                 .then(res => res.json())
                 .then(chats => {
-                    const container = document.createElement("div");
-
                     chats.forEach(chat => {
-                        const vendor_name = document.createElement("h2");
-                        vendor_name.textContent = chat.name;
-                        vendor_name.addEventListener("click", () => {
+                        const chatButton = document.createElement("button");
+                        chatButton.textContent = chat.name;
+                        chatButton.classList.add("chat-selector");
+
+                        chatButton.addEventListener("click", () => {
                             selectedChatId = chat.chat_id;
                             loadMessages(selectedChatId);
                         });
-                        container.appendChild(vendor_name);
+
+                        chatContainer.appendChild(chatButton);
                     });
-
-                    existing_chat_div.prepend(container);
                 });
-
-            const messageInput = document.getElementById("another-message");
-
-            existing_send_btn.addEventListener("click", function () {
-                fetch('/api/send_message', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: selectedChatId,
-                        message: messageInput.value
-                    })
-                });
-            });
         });
 
         new_chat_send_btn.addEventListener("click", function () {
@@ -279,10 +328,15 @@
         });
 
         function loadMessages(chatId) {
+            messageContainer.innerHTML = "";
+
             fetch(`/api/load_messages/${chatId}`)
                 .then(res => res.json())
                 .then(messages => {
                     messages.forEach(msg => {
+                        const wrapper = document.createElement("div");
+                        wrapper.classList.add("chat-message-group");
+
                         const sender = document.createElement("h2");
                         sender.classList.add("existing-vendor-name");
                         sender.textContent = `User ${msg.sender_id}`;
@@ -291,8 +345,37 @@
                         description.classList.add("existing-description");
                         description.textContent = msg.message;
 
-                        existing_chat_div.appendChild(sender);
-                        existing_chat_div.appendChild(description);
+                        wrapper.appendChild(sender);
+                        wrapper.appendChild(description);
+                        messageContainer.appendChild(wrapper);
+                    });
+
+                    // Create the input field and button AFTER messages load
+                    const messageInput = document.createElement("textarea");
+                    messageInput.id = "another-message";
+                    messageInput.name = "another-message";
+                    messageInput.placeholder = "Next Message...";
+                    messageInput.style.marginTop = "10px";
+
+                    const sendBtn = document.createElement("button");
+                    sendBtn.id = "existing-send-btn";
+                    sendBtn.textContent = "Send";
+
+                    messageContainer.appendChild(messageInput);
+                    messageContainer.appendChild(sendBtn);
+
+                    sendBtn.addEventListener("click", function () {
+                        fetch('/api/send_message', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                message: messageInput.value
+                            })
+                        }).then(() => {
+                            messageInput.value = "";
+                            loadMessages(chatId);  // Refresh messages
+                        });
                     });
                 });
         }

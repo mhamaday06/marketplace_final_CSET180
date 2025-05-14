@@ -72,14 +72,18 @@
 {% endif %}
 
 {% for order in orders %}
-<form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
-    <input type="hidden" name="product_id" value="{{ order.product_id }}">
-    <input type="hidden" name="product_title" value="{{ order.product_title }}">
-    <label for="return_reason">Return Reason:</label><br>
-    <textarea name="return_reason" required></textarea><br>
-    <button type="submit">Request Return</button>
-</form>
+<div style="border: 1px solid white; padding: 10px; margin: 10px;">
+    <p><strong>Product:</strong> {{ order.product_title }}</p>
+    <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
+        <input type="hidden" name="product_id" value="{{ order.product_id }}">
+        <input type="hidden" name="product_title" value="{{ order.product_title }}">
+        <label for="return_reason">Return Reason:</label><br>
+        <textarea name="return_reason" required></textarea><br>
+        <button type="submit">Request Return</button>
+    </form>
+</div>
 {% endfor %}
+
 
 
 

@@ -121,7 +121,7 @@ class Chat(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
 
 class ChatMessage(db.Model):
-    __tablename__ = 'chat_message'
+    __tablename__ = 'ChatMessage'
 
     message_id = db.Column(db.Integer, primary_key=True)
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.chat_id'), nullable=False)
@@ -993,20 +993,25 @@ def new_chat():
     name = data.get("name")
     description = data.get("description")
 
-    # Example DB model usage — replace with your actual table/logic
     new_chat = Chat(
-        name=data.get("name"),
+        name=name,
         description=description,
         user_id=user_id,
-        images="",  # default or based on UI
-        return_id=None  # fill in if applicable
+        images="",
+        return_id=None
     )
-
     db.session.add(new_chat)
     db.session.commit()
 
-    return jsonify({"message": "Chat created successfully", "chat_id": new_chat.chat_id})
+    initial_msg = ChatMessage(
+        chat_id=new_chat.chat_id,
+        sender_id=user_id,
+        message_text=description
+    )
+    db.session.add(initial_msg)
+    db.session.commit()
 
+    return jsonify({"message": "Chat created successfully", "chat_id": new_chat.chat_id})
 
 if __name__ == '__main__':
         app.run(debug=True)
