@@ -53,6 +53,7 @@ button {
     color: white;
     padding: 15px 10px;
 }
+
 </style>
 <body> 
     <nav>
@@ -176,52 +177,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
             totalElement.innerText = `$${total.toFixed(2)}`;
         });
+    
+        purchase_btn.addEventListener("click", function () {
+            const rows = document.querySelectorAll('.cart-row');
+            const cartItems = [];
+            let totalCost = 0;
+    
+            rows.forEach(row => {
+                const name = row.querySelector('.cart-item')?.innerText;
+                const priceText = row.querySelector('.cart-price')?.innerText;
+                const quantityText = row.querySelector('.qty-display')?.innerText;
+    
+                if (name && priceText && quantityText) {
+                    const price = parseFloat(priceText.replace('$', '').trim());
+                    const quantity = parseInt(quantityText.trim());
+    
+                    const matchingItem = data_info.cart.find(i => i.name === name);
+                    if (!matchingItem) return;
+    
+                    cartItems.push({
+                        product_title: name,
+                        price: price,
+                        quantity: quantity,
+                        product_id: matchingItem.product_id
+                    });
+    
+                    totalCost += price * quantity;
+                }
+            });
+    
+            // First check the user's balance
+fetch('/api/get_user_id')
+    .then(res => res.json())
+    .then(user => {
+        if (!user || !user.user_id) throw new Error("User not found");
 
-    purchase_btn.addEventListener("click", () => {
-        const rows = document.querySelectorAll('.cart-row');
-        const cartItems = [];
-        let totalCost = 0;
+        return fetch(`/api/user_balance?user_id=${user.user_id}`);
+    })
+    .then(res => res.json())
+    .then(balanceData => {
+        const userBalance = parseFloat(balanceData.balance);
+        if (userBalance < totalCost) {
+            alert(`You do not have enough balance. You need $${totalCost.toFixed(2)}, but you only have $${userBalance.toFixed(2)}.`);
+            throw new Error("Insufficient balance");
+        }
 
-        rows.forEach(row => {
-            const name = row.querySelector('.cart-item')?.innerText;
-            const priceText = row.querySelector('.cart-price')?.innerText;
-            const quantityText = row.querySelector('.qty-display')?.innerText;
-
-            if (name && priceText && quantityText) {
-                const price = parseFloat(priceText.replace('$', '').trim());
-                const quantity = parseInt(quantityText.trim());
-
-                const matchingItem = data_info.cart.find(i => i.name === name);
-                if (!matchingItem) return;
-
-                cartItems.push({
-                    product_title: name,
-                    price: price,
-                    quantity: quantity,
-                    product_id: matchingItem.product_id
-                });
-
-                totalCost += price * quantity;
-            }
-        });
-
+        // If balance is OK, proceed
         const receiptPayload = {
             user_id: userId,
             cart: cartItems,
             total_price: totalCost.toFixed(2)
         };
 
-        fetch('/api/sent_order', {
+        return fetch('/api/sent_order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(receiptPayload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                alert("Order failed: " + data.error);
-                return;
-            }
+        });
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert("Order failed: " + data.error);
+            return;
+        }
+
+        console.log("Order submitted to vendor:", data.message);
+
+        return fetch('/api/receipt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(receiptPayload)
+        });
+    })
+    .then(res => {
+        if (res && !res.ok) throw new Error("Failed to record receipt.");
+        return res ? res.json() : null;
+    })
+    .then(data => {
+        if (data) {
+            console.log("Receipt recorded:", data.message);
+        }
+        clearCart();
+        returnHome();
+    })
+    .catch(error => {
+        console.error("Transaction error:", error);
+        // alert already triggered if it's insufficient funds
+    });
+            fetch('/api/sent_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(receiptPayload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Order failed: " + data.error);
+                    return;
+                }
 
             return fetch('/api/receipt', {
                 method: 'POST',

@@ -1066,6 +1066,15 @@ def deposit_balance():
 
     return jsonify({"message": f"${deposit_value:.2f} deposited successfully", "new_balance": str(user.balance)})
 
+@app.route('/api/user_balance')
+def get_user_balance():
+    user_id = request.args.get('user_id', type=int)
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify({"balance": str(user.balance)})
+
+
 
 if __name__ == '__main__':
         app.run(debug=True)
