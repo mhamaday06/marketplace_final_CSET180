@@ -6,7 +6,7 @@
     <title>Accounts</title>
 </head>
 <style>
-        * {
+    * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
@@ -44,6 +44,59 @@
         color: black;
     }
 
+    h1 {
+        text-align: center;
+        padding: 20px;
+        font-size: 40px;
+    }
+
+    button {
+        border: 1px transparent solid;
+        border-radius: 5px;
+        font-size: 20px;
+        background-color: red;
+        color: white;
+        padding: 15px 10px;
+    }
+
+    button:hover {
+        background-color: white;
+        color: black;
+        transition: 0.2s ease-in;
+    }
+
+    input {
+        font-size: 20px;
+        padding: 15px 10px;
+        width: 100%;
+        border: 1px transparent solid;
+        border-radius: 5px;
+    }
+
+    #button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #deposit-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #deposit-container h2 {
+        font-size: 40px;
+        margin: 10px;
+    }
+
+    #deposit-container input {
+        width: 20%;
+    }
+
 </style>
 <body>
     <nav>
@@ -71,37 +124,96 @@
     </div>
 {% endif %}
 
-{% for order in orders %}
-<div class="products" data-product-id="{{ order.product_id }}">
-    <h3>{{ order.product_title }}</h3>
-    <img src="{{ order.image_url }}" alt="Product Image">
-    <p><strong>Quantity:</strong> {{ order.quantity_item }}</p>
-    <p><strong>Total:</strong> ${{ order.total_price }}</p>
-    <p><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
-
-    <!-- Properly structured return form -->
-    <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
-        <input type="hidden" name="product_id" value="{{ order.product_id }}">
-        <input type="hidden" name="product_title" value="{{ order.product_title }}">
-        <label for="return_reason">Reason for Return:</label><br>
-        <textarea name="return_reason" placeholder="Why are you returning this?" required></textarea><br>
-        <button type="submit" name="submit">Request Return</button>
-    </form>
+<div id="button-container">
+    <button id="returns-btn">Returns</button>
+    <button id="deposit-btn">Deposit</button>
 </div>
-{% endfor %}
 
+<div id="return-container">
+    {% for order in orders %}
+        <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
+            <div class="products" data-product-id="{{ order.product_id }}">
+                <h3>{{ order.product_title }}</h3>
+                <img src="{{ order.image_url }}" alt="Product Image">
+                <p><strong>Quantity:</strong> {{ order.quantity_item }}</p>
+                <p><strong>Total:</strong> ${{ order.total_price }}</p>
+                <p><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
 
+                <!-- Return Request Form -->
+                <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
+                    <input type="hidden" name="product_id" value="{{ order.product_id }}">
+                    <input type="hidden" name="product_title" value="{{ order.product_title }}">
+                    <label for="return_reason">Reason for Return:</label><br>
+                    <textarea name="return_reason" placeholder="Why are you returning this?" required></textarea><br>
+                    <button type="submit">Request Return</button>
+                </form>
+            </div>
+        </form>
+    {% endfor %}
+    {% if session.get('username') %}
+    <form method="POST" action="{{ url_for('logout') }}" style="display:inline;">
+        <button type="submit">Logout</button>
+    </form>
+    {% endif %}
+</div>
 
+<div id="deposit-container">
+    <h2>Deposit Money Here!</h2>
 
-{% if session.get('username') %}
-<form method="POST" action="{{ url_for('logout') }}" style="display:inline;">
-    <button type="submit">Logout</button>
-</form>
-{% endif %}
+    <input type="text" name="card-input" id="card-input" placeholder="Card Number...">
+    <input type="text" name="ccv-input" id="ccv-input" placeholder="CCV Number">
+    <input type="text" name="deposit-field" id="deposit-input" placeholder="Deposit Amount...">
+    <button id="deposit-balance-btn">Deposit</button>
+</div>
+
 <script>
     function filterAccounts() {
         var type = document.getElementById("filter-select").value;
         window.location.href = "/account?type=" + type;
     }
+
+    const returns_btn = document.getElementById("returns-btn")
+    const deposit_btn = document.getElementById("deposit-btn")
+    const deposit_balance_btn = document.getElementById("deposit-balance-btn")
+
+    const returns_container = document.getElementById("return-container")
+    const deposit_container = document.getElementById("deposit-container")
+
+    returns_btn.addEventListener("click", function() {
+        returns_container.style.display = "flex"
+        deposit_container.style.display = "none"
+    })
+
+    deposit_btn.addEventListener("click", function() {
+        deposit_container.style.display = "flex"
+        returns_container.style.display = "none"
+    })
+
+    deposit_balance_btn.addEventListener("click", function () {
+        const card_num = document.getElementById("card-input").value;
+        const ccv_num = document.getElementById("ccv-input").value;
+        const deposit_amount = parseFloat(document.getElementById("deposit-input").value);
+
+        if (isNaN(deposit_amount) || deposit_amount <= 0) {
+            alert("Please enter a valid deposit amount.");
+            return;
+        }
+
+        fetch('/api/deposit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: deposit_amount })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert("Error: " + data.error);
+            } else {
+                alert(data.message);
+                location.reload(); // Refresh page to show updated balance
+            }
+        });
+    });
+
 </script>
 </html>
