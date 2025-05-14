@@ -55,7 +55,7 @@ button {
 }
 
 </style>
-<body>
+<body> 
     <nav>
         <ul>
             <li><a href="{{ url_for('login') }}">Login</a></li>
@@ -71,10 +71,10 @@ button {
     <div class="center">
         <div id="cartItems" class="column">
             <br>
-            <h2 >Thank you for your purchase,
+            <h2>Thank you for your purchase,
                 <div id="displayName"></div>
             </h2><br>
-            <i style="text-align: center;">Your order will be ready is </i>
+            <i style="text-align: center;">Your order will be ready soon.</i>
 
             <br><br>
             <div class="content-align">
@@ -82,101 +82,82 @@ button {
                 <hr><br>
                 <div class="cart-row">
                     <span class="cart-item cart-header cart-column">ITEM</span>
-                    <span class="cart-price cart-header cart-column" >PRICE PER ITEM</span>
+                    <span class="cart-price cart-header cart-column">PRICE PER ITEM</span>
                     <span class="cart-quantity cart-header cart-column">QUANTITY</span>
                     <span class="cart-header cart-column">REMOVE</span>
                 </div>
-                <div id="itemsincart" class="cart-items">
-
-                </div>
+                <div id="itemsincart" class="cart-items"></div>
                 <br>
                 <div class="cart-total">
-                    <strong class="cart-total-title" >Total</strong>
-                    <span class="cart-total-price" >$0.00</span>
+                    <strong class="cart-total-title">Total</strong>
+                    <span class="cart-total-price">$0.00</span>
                 </div>
             </div>
             <br>
             <div class="returnHomeButton">
-                <button id="purchase-btn" onclick="returnHome(),clearCart()">Purchase</button>
+                <button id="purchase-btn">Purchase</button>
             </div>
         </div>
-
     </div>
-
     <br>
 </body>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        fetch('/api/get_user_id')
-        .then(res => {
-            if (!res.ok) {
-                console.error("Failed to fetch user ID. Status:", res.status);
-                throw new Error("Failed to fetch user ID.");
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.user_id) {
-                userId = data.user_id;
-                console.log("Logged-in user ID:", userId);
-            } else {
-                console.warn("User ID not found in session. Response:", data);
-                alert("You must be logged in to make a purchase.");
-            }
-        })
-        .catch(err => {
-            console.error("Error fetching user ID:", err);
-            alert("Something went wrong while checking your login status.");
-        });
 
-        const purchase_btn = document.getElementById("purchase-btn")
-        let data_info = 0
-    
-        fetch('/api/cart')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Not authorized or unable to fetch cart data.');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const itemsContainer = document.getElementById('itemsincart');
-                const totalElement = document.querySelector('.cart-total-price');
-                let total = 0;
-                data_info = data;
-    
-                data.cart.forEach(item => {
-                    const itemRow = document.createElement('div');
-                    itemRow.classList.add('cart-row');
-    
-                    const nameCol = document.createElement('span');
-                    nameCol.classList.add('cart-item', 'cart-column');
-                    nameCol.innerText = item.name;
-    
-                    const priceCol = document.createElement('span');
-                    priceCol.classList.add('cart-price', 'cart-column');
-                    priceCol.innerText = `$${item.price.toFixed(2)}`;
-    
-                    const quantityCol = document.createElement('span');
-                    quantityCol.classList.add('cart-quantity', 'cart-column');
-    
-                    const minusBtn = document.createElement('button');
-                    minusBtn.innerText = '−';
-                    minusBtn.onclick = () => updateQuantity(item, -1);
-    
-                    const qtyDisplay = document.createElement('span');
-                    qtyDisplay.innerText = item.quantity;
-                    qtyDisplay.classList.add('qty-display');
-    
-                    const plusBtn = document.createElement('button');
-                    plusBtn.innerText = '+';
-                    plusBtn.onclick = () => updateQuantity(item, 1);
-    
-                    quantityCol.appendChild(minusBtn);
-                    quantityCol.appendChild(qtyDisplay);
-                    quantityCol.appendChild(plusBtn);
-    
-                   
+<script>
+let userId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/get_user_id')
+    .then(res => res.json())
+    .then(data => {
+        if (data.user_id) {
+            userId = data.user_id;
+        } else {
+            alert("You must be logged in to make a purchase.");
+        }
+    });
+
+    const purchase_btn = document.getElementById("purchase-btn");
+    let data_info = 0;
+
+    fetch('/api/cart')
+        .then(res => res.json())
+        .then(data => {
+            const itemsContainer = document.getElementById('itemsincart');
+            const totalElement = document.querySelector('.cart-total-price');
+            let total = 0;
+            data_info = data;
+
+            data.cart.forEach(item => {
+                const itemRow = document.createElement('div');
+                itemRow.classList.add('cart-row');
+
+                const nameCol = document.createElement('span');
+                nameCol.classList.add('cart-item', 'cart-column');
+                nameCol.innerText = item.name;
+
+                const priceCol = document.createElement('span');
+                priceCol.classList.add('cart-price', 'cart-column');
+                priceCol.innerText = `$${item.price.toFixed(2)}`;
+
+                const quantityCol = document.createElement('span');
+                quantityCol.classList.add('cart-quantity', 'cart-column');
+
+                const minusBtn = document.createElement('button');
+                minusBtn.innerText = '−';
+                minusBtn.onclick = () => updateQuantity(item, -1);
+
+                const qtyDisplay = document.createElement('span');
+                qtyDisplay.innerText = item.quantity;
+                qtyDisplay.classList.add('qty-display');
+
+                const plusBtn = document.createElement('button');
+                plusBtn.innerText = '+';
+                plusBtn.onclick = () => updateQuantity(item, 1);
+
+                quantityCol.appendChild(minusBtn);
+                quantityCol.appendChild(qtyDisplay);
+                quantityCol.appendChild(plusBtn);
+
                 const removeCol = document.createElement('span');
                 removeCol.classList.add('cart-column');
                 const removeBtn = document.createElement('button');
@@ -184,11 +165,10 @@ button {
                 removeBtn.onclick = () => removeItemFromCart(item.product_id);
                 removeCol.appendChild(removeBtn);
 
-                
                 itemRow.appendChild(nameCol);
                 itemRow.appendChild(priceCol);
                 itemRow.appendChild(quantityCol);
-                itemRow.appendChild(removeCol); 
+                itemRow.appendChild(removeCol);
 
                 itemsContainer.appendChild(itemRow);
 
@@ -196,9 +176,6 @@ button {
             });
 
             totalElement.innerText = `$${total.toFixed(2)}`;
-        })
-        .catch(error => {
-            console.error('Error loading cart:', error);
         });
     
         purchase_btn.addEventListener("click", function () {
@@ -300,113 +277,77 @@ fetch('/api/get_user_id')
                     return;
                 }
 
-                console.log("Order submitted to vendor:", data.message);
-
-                // Only record receipt if order succeeded
-                return fetch('/api/receipt', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(receiptPayload)
-                });
-            })
-            .then(res => {
-                if (res && !res.ok) throw new Error("Failed to record receipt.");
-                return res ? res.json() : null;
-            })
-            .then(data => {
-                if (data) {
-                    console.log("Receipt recorded:", data.message);
-                }
-                clearCart();
-                returnHome();
-            })
-            .catch(error => {
-                console.error("Transaction error:", error);
-                alert("Something went wrong while processing your order.");
+            return fetch('/api/receipt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(receiptPayload)
             });
+        })
+        .then(res => res?.json())
+        .then(data => {
+            if (data) alert(data.message);
+            clearCart();
+            returnHome();
+        })
+        .catch(error => {
+            console.error("Transaction error:", error);
+            alert("Something went wrong while processing your order.");
         });
     });
-    
-    function updateQuantity(item, delta) {
+});
+
+function updateQuantity(item, delta) {
     const rows = document.querySelectorAll('.cart-row');
     rows.forEach(row => {
         const name = row.querySelector('.cart-item')?.innerText;
         if (name === item.name) {
             const qtySpan = row.querySelector('.qty-display');
-            let quantity = parseInt(qtySpan.innerText);
-            quantity = Math.max(1, quantity + delta); // prevent 0
-
-            // Update displayed quantity
+            let quantity = Math.max(1, parseInt(qtySpan.innerText) + delta);
             qtySpan.innerText = quantity;
+
             fetch('/api/update_cart', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        items: [{
-            product_id: item.product_id,
-            quantity: quantity
-            }]
-        })
-    });
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: [{ product_id: item.product_id, quantity }]
+                })
+            });
 
-            // Recalculate total price
-            const totalElement = document.querySelector('.cart-total-price');
             let newTotal = 0;
-
             document.querySelectorAll('.cart-row').forEach(row => {
-                const qtyText = row.querySelector('.qty-display')?.innerText;
-                const qty = qtyText ? parseInt(qtyText.trim()) : 0;
-                const price = parseFloat(row.querySelector('.cart-price')?.innerText.replace('$', '') || "0");
+                const qty = parseInt(row.querySelector('.qty-display')?.innerText);
+                const price = parseFloat(row.querySelector('.cart-price')?.innerText.replace('$', ''));
                 newTotal += qty * price;
             });
 
-            totalElement.innerText = `$${newTotal.toFixed(2)}`;
+            document.querySelector('.cart-total-price').innerText = `$${newTotal.toFixed(2)}`;
         }
     });
 }
-    
+
 function removeItemFromCart(productId) {
     fetch('/api/remove_from_cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_id: productId })
     })
-    .then(response => {
-        if (!response.ok) throw new Error('Failed to remove item');
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         alert(data.message);
-        location.reload(); 
-    })
-    .catch(error => console.error(error));
-}
-    
-    function returnHome() {
-        window.location.href = "/";
-    }
-    
-    function clearCart() {
-    fetch('/api/checkout', {
-        method: 'POST'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Checkout failed');
-        }
-        return response.json();
-    })
-    .then(data => {
-        alert(data.message);
-    })
-    .catch(error => {
-        console.error(error);
-        alert("There was an error during checkout.");
+        location.reload();
     });
 }
-    
+
 function returnHome() {
     window.location.href = "/";
+}
+
+function clearCart() {
+    fetch('/api/checkout', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+    });
 }
 </script>
 </html>
