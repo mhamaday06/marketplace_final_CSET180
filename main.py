@@ -317,9 +317,13 @@ def request_return(order_id):
         flash("Invalid order for return", "error")
         return redirect('/account')
 
-    reason = request.form['return_reason']
+    reason = request.form.get('return_reason')
     product_id = request.form.get('product_id')
     product_title = request.form.get('product_title')
+
+    print(f"📦 return_reason: {reason}")
+    print(f"📦 product_id: {product_id}")
+    print(f"📦 product_title: {product_title}")
 
     return_request = PendingReturn(
         title=f"Return Request for {product_title}",
@@ -338,6 +342,7 @@ def request_return(order_id):
     db.session.commit()
 
     flash("Return request submitted for admin review.", "success")
+    print("✅ request_return ROUTE CALLED")
     return redirect('/my_orders')
 
 @app.route('/approve_return/<int:return_id>', methods=['POST'])
