@@ -131,24 +131,16 @@
 
 <div id="return-container">
     {% for order in orders %}
-        <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
-            <div class="products" data-product-id="{{ order.product_id }}">
-                <h3>{{ order.product_title }}</h3>
-                <img src="{{ order.image_url }}" alt="Product Image">
-                <p><strong>Quantity:</strong> {{ order.quantity_item }}</p>
-                <p><strong>Total:</strong> ${{ order.total_price }}</p>
-                <p><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
+        <div class="products" data-product-id="{{ order.product_id }}">
+            <h3>{{ order.product_title }}</h3>
+            <img src="{{ order.image_url }}" alt="Product Image">
+            <p><strong>Quantity:</strong> {{ order.quantity_item }}</p>
+            <p><strong>Total:</strong> ${{ order.total_price }}</p>
+            <p><strong>Date:</strong> {{ order.date_purchased.strftime("%Y-%m-%d") }}</p>
 
-                <!-- Return Request Form -->
-                <form method="POST" action="{{ url_for('request_return', order_id=order.order_id) }}">
-                    <input type="hidden" name="product_id" value="{{ order.product_id }}">
-                    <input type="hidden" name="product_title" value="{{ order.product_title }}">
-                    <label for="return_reason">Reason for Return:</label><br>
-                    <textarea name="return_reason" placeholder="Why are you returning this?" required></textarea><br>
-                    <button type="submit">Request Return</button>
-                </form>
-            </div>
-        </form>
+            <!-- Return Request Button -->
+            <button type="button" onclick="submitReturnRequest({{ order.order_id | tojson }})">Request Return</button>        
+        </div>
     {% endfor %}
     {% if session.get('username') %}
     <form method="POST" action="{{ url_for('logout') }}" style="display:inline;">
@@ -167,6 +159,35 @@
 </div>
 
 <script>
+    function submitReturnRequest(orderId) {
+        console.log("Return requested for order:", orderId); // For debugging
+        if (confirm('Are you sure you want to request a return for this order?')) {
+            // Send the orderId in a POST request using fetch
+            fetch('/account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `order_id=${orderId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);  // Success message
+                // Optionally, update the UI without page reload
+            })
+            .catch(error => {
+                console.error('Error submitting return request:', error);
+            });
+        }
+    }
+    function submitReturnRequest(orderId) {
+        // Example function to handle the return request (you can send it via AJAX or other methods)
+        alert('Return requested for Order ID: ' + orderId);
+
+        // If needed, send an AJAX request to submit the return request to the backend
+        // Example:
+        // $.post("/submit_return", { order_id: orderId }, function(response) { /* handle response */ });
+    }
     function filterAccounts() {
         var type = document.getElementById("filter-select").value;
         window.location.href = "/account?type=" + type;

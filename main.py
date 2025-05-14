@@ -107,10 +107,18 @@ class PendingReturn(db.Model):
     title = db.Column(db.String(60), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(11), nullable=False)
-
+    
+    
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'))
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'))
+    receipt_id = db.Column(db.Integer, db.ForeignKey('receipt.receipt_id'))
+
+    
+    user = db.relationship('User', backref='pending_returns')
+    order = db.relationship('Orders', backref='pending_returns')
+    product = db.relationship('Product', backref='pending_returns')
+    receipt = db.relationship('Receipt', backref='pending_returns')
 
 class Chat(db.Model):
     chat_id = db.Column(db.Integer, primary_key=True)
@@ -164,6 +172,7 @@ def submit_complaint():
     order_id = request.form['order_id']
     user_id = session['user_id']
     date = datetime.now()
+    customer_comment = request.form.get('customer_comment', '')  # Optional field
     image_path = None
 
     if 'image' in request.files:
@@ -176,9 +185,9 @@ def submit_complaint():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO Pending_Return (title, description, demand_specification, date, status, images, user_id, order_id, product_id)
-        VALUES (%s, %s, %s, %s, 'pending', %s, %s, %s, %s)
-    """, (title, description, demand_spec, date, image_path, user_id, order_id, product_id))
+        INSERT INTO Pending_Return (title, description, demand_specification, date, status, images, customer_comment, user_id, order_id, product_id)
+        VALUES (%s, %s, %s, %s, 'pending', %s, %s, %s, %s, %s)
+    """, (title, description, demand_spec, date, image_path, customer_comment, user_id, order_id, product_id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -305,57 +314,46 @@ def get_cart():
     return jsonify([dict(item) for item in cart_items])
 
 
-@app.route('/request_return/<int:order_id>', methods=['POST'])
-def request_return(order_id):
-    if 'username' not in session:
-        return redirect('/login')
+@app.route('/request_return', methods=['POST'])
+def request_return():
+    try:
+        data = request.get_json()
 
-    user = User.query.filter_by(username=session['username']).first()
-    order = Orders.query.filter_by(order_id=order_id, user_id=user.user_id).first()
+        # Get data from the request
+        order_id = data.get('order_id')
+        return_reason = data.get('return_reason')
 
-    if not order:
-        flash("Invalid order for return", "error")
-        return redirect('/account')
+        # Assuming the user is logged in and we have the user_id from the session
+        user_id = session.get('user_id')
 
-    reason = request.form.get('return_reason')
-    product_id = request.form.get('product_id')
-    product_title = request.form.get('product_title')
+        # Fetch the order details to get the product information
+        order = Orders.query.filter_by(order_id=order_id, user_id=user_id).first()
 
-    print(f"📦 return_reason: {reason}")
-    print(f"📦 product_id: {product_id}")
-    print(f"📦 product_title: {product_title}")
+        if not order:
+            return jsonify({'success': False, 'error': 'Order not found or unauthorized.'}), 400
 
-    return_request = PendingReturn(
-        title=f"Return Request for {product_title}",
-        description=reason,
-        demand_specification="Return",  # hardcoded
-        images="",
-        customer_comment="",
-        date=datetime.now(),
-        status="pending",
-        user_id=user.user_id,
-        order_id=order_id,
-        product_id=product_id
-    )
+        # Add entry to the Pending_Return table
+        new_return = PendingReturn(
+            description=return_reason,
+            demand_specification="",
+            images="",
+            title=order.product_title,
+            date=datetime.now(),
+            status="pending",
+            user_id=user_id,
+            order_id=order_id,
+            product_id=order.product_id
+        )
 
-    db.session.add(return_request)
-    db.session.commit()
+        db.session.add(new_return)
+        db.session.commit()
 
-    flash("Return request submitted for admin review.", "success")
-    print("✅ request_return ROUTE CALLED")
-    return redirect('/my_orders')
+        # Return success message
+        return jsonify({'success': True})
 
-@app.route('/approve_return/<int:return_id>', methods=['POST'])
-def approve_return(return_id):
-    if 'user_type' not in session or session['user_type'] not in [2, 3]:
-        return redirect('/login')
-
-    ret = PendingReturn.query.get_or_404(return_id)
-    ret.status = 'approved'
-    db.session.commit()
-    flash("Return approved.", "success")
-    return redirect('/admin_returns')
-
+    except Exception as e:
+        print(f"Error processing return: {e}")
+        return jsonify({'success': False, 'error': 'An error occurred. Please try again later.'}), 500
 
 @app.route('/deny_return/<int:return_id>', methods=['POST'])
 def deny_return(return_id):
@@ -374,6 +372,7 @@ def accounts():
         return redirect('/login')
 
     user = User.query.filter_by(username=session['username']).first()
+    
 
     if user.user_type == 1:
         raw_orders = Receipt.query.filter_by(user_id=user.user_id).all()
