@@ -1037,5 +1037,30 @@ def new_chat():
 
     return jsonify({"message": "Chat created successfully", "chat_id": new_chat.chat_id})
 
+@app.route('/api/deposit', methods=['POST'])
+def deposit_balance():
+    if 'user_id' not in session:
+        return jsonify({"error": "User not logged in"}), 403
+
+    data = request.get_json()
+    amount = data.get('amount')
+
+    try:
+        deposit_value = Decimal(str(amount))
+        if deposit_value <= 0:
+            return jsonify({"error": "Deposit must be greater than 0"}), 400
+    except:
+        return jsonify({"error": "Invalid deposit amount"}), 400
+
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    user.balance += deposit_value
+    db.session.commit()
+
+    return jsonify({"message": f"${deposit_value:.2f} deposited successfully", "new_balance": str(user.balance)})
+
+
 if __name__ == '__main__':
         app.run(debug=True)
