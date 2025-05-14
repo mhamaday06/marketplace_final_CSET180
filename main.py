@@ -862,6 +862,7 @@ def send_order():
     user_balance = Decimal(str(user.balance))
     print(f"User Balance (Decimal): {user_balance}, Total Order Cost (Decimal): {total_order_cost}")
     print("TYPE CHECK — user_balance:", type(user_balance), " total_order_cost:", type(total_order_cost))
+
     if user_balance < total_order_cost:
         return jsonify({
             "error": "Insufficient balance to complete the purchase",
@@ -883,13 +884,16 @@ def send_order():
         if not vendor_id:
             continue  # skip if vendor missing
 
+        cart = data.get("cart", [])
+
         order = Orders(
             user_id=user_id,
             vendor_id=vendor_id,
+            total_price=item_total,
+            status='PENDING',
             product_id=product_id,
-            total_price=float(item_total),
-            status=order_status
         )
+
         db.session.add(order)
 
     db.session.commit()
