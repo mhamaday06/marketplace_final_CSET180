@@ -288,35 +288,55 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.user_id) {
-                        const user_id = data.user_id;
-                        const name = document.getElementById("vendor-name").value;
-                        const description = document.getElementById("chat-description").value;
+                        if (data.user_type == 1) {
+                            const user_id = data.user_id;
+                            const name = document.getElementById("vendor-name").value;
+                            const description = document.getElementById("chat-description").value;
 
-                        const new_chat_payload = {
-                            name: name,
-                            description: description,
-                            user_id: user_id
-                        };
+                            const new_chat_payload = {
+                                name: name,
+                                description: description,
+                                user_id: user_id
+                            };
 
-                        fetch('/api/new_chat', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(new_chat_payload)
-                        })
-                            .then(response => response.json())
-                            .then(chatRes => {
-                                if (chatRes.error) {
-                                    alert("Chat creation failed: " + chatRes.error);
-                                    return;
-                                }
-
-                                alert("Chat created successfully!");
-                                console.log("Chat created:", chatRes);
+                            fetch('/api/new_chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(new_chat_payload)
                             })
-                            .catch(err => {
-                                console.error("Error submitting new chat:", err);
-                                alert("Something went wrong creating the chat.");
+                                .then(response => response.json())
+                                .then(chatRes => {
+                                    if (chatRes.error) {
+                                        alert("Chat creation failed: " + chatRes.error);
+                                        return;
+                                    }
+
+                                    alert("Chat created successfully!");
+                                    console.log("Chat created:", chatRes);
+                                })
+                                .catch(err => {
+                                    console.error("Error submitting new chat:", err);
+                                    alert("Something went wrong creating the chat.");
+                                });
+                        } else if (data.user_type == 2) {
+                            // Vendor-specific logic
+                            const vendorUsername = data.username;
+                            const vendorId = data.user_id;
+
+                            // Send this info in your payload if needed
+                            const payload = {
+                                name: vendorUsername,  // match with Chat.name
+                                user_id: vendorId,
+                                description: "Your message..."
+                            };
+
+                            fetch('/api/new_chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
                             });
+                        }
+                        
                     } else {
                         alert("You must be logged in to create a chat.");
                     }

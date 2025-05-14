@@ -816,12 +816,19 @@ def export_cart():
     db.session.commit()
     return jsonify({"message": f"{len(cart_items)} item(s) saved to receipt."})
 
-
 @app.route('/api/get_user_id')
 def get_user_id():
-    if 'user_id' in session:
-        return jsonify({"user_id": session['user_id']})
-    return jsonify({"error": "Not logged in"}), 401
+    if 'username' not in session:
+        return jsonify({"error": "User not logged in"}), 403
+
+    user = User.query.filter_by(username=session['username']).first()
+    if user:
+        return jsonify({
+            "user_id": user.user_id,
+            "username": user.username,
+            "user_type": user.user_type  # 1 = customer, 2 = vendor
+        })
+    return jsonify({"error": "User not found"}), 404
 
 @app.route('/api/sent_order', methods=['POST'])
 def send_order():
@@ -970,13 +977,25 @@ def send_message():
 @app.route('/api/get_user_chats')
 def get_user_chats():
     user_id = request.args.get('user_id', type=int)
-    chats = Chat.query.filter_by(user_id=user_id).all()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Get all chats where:
+    # - this user created the chat (user_id matches)
+    # - OR this user's username is listed as the chat name (vendor side)
+    chats = Chat.query.filter(
+        (Chat.user_id == user_id) | (Chat.name == user.username)
+    ).all()
+
     return jsonify([
         {
             "chat_id": chat.chat_id,
             "name": chat.name,
             "description": chat.description
-        } for chat in chats
+        }
+        for chat in chats
     ])
 
 @app.route('/api/load_messages/<int:chat_id>', methods=['GET'])
