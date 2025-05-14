@@ -371,16 +371,19 @@ def accounts():
     user = User.query.filter_by(username=session['username']).first()
 
     if user.user_type == 1:
-        raw_orders = Orders.query.filter_by(user_id=user.user_id).all()
+        raw_orders = Receipt.query.filter_by(user_id=user.user_id).all()
         returns = PendingReturn.query.filter_by(user_id=user.user_id).all()
 
         order_data = []
         for order in raw_orders:
             product = Product.query.get(order.product_id)
             order_data.append({
-                "order_id": order.order_id,
+                "order_id": order.receipt_id,
                 "product_id": order.product_id,
-                "product_title": product.name if product else "Unknown Product"
+                "product_title": product.name if product else "Unknown Product",
+                "date_purchased": order.date_purchased,
+                "total_price": order.total_price,
+                "quantity_item": order.quantity_item
             })
 
         return render_template('accounts.html', user=user, orders=order_data, returns=returns)
@@ -392,7 +395,6 @@ def accounts():
 
     users = User.query.filter_by(user_type=2 if user_type.lower() == 'vendor' else 3).all()
     return render_template('accounts.html', user=user, users=users)
-
 
 @app.route('/returns', methods=['GET', 'POST'])
 def returns():
@@ -468,6 +470,9 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/admin_returns')
+def admin_returns():
+    return render_template('admin_returns.html')
 @app.route('/staff_login', methods=['GET', 'POST'])
 def staff_login():
     if request.method == 'POST':
